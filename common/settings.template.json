@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "deny": [
+      "{{DENY_OTHERS}}",
+      "Edit({{CREW}}/bots/{{BOT}}/.claude/settings.json)",
+      "Edit({{CREW}}/bots/{{BOT}}/.env)",
+      "Edit({{CREW}}/common/hooks/**)",
+      "{{DENY_KNOWLEDGE}}"
+    ],
+    "additionalDirectories": ["{{ROOMS_DIR}}", "{{KNOWLEDGE_DIR}}", "{{PROPOSALS_DIR}}"]
+  },
+  "env": { "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1" },
+  "hooks": {
+    "SessionStart": [
+      { "matcher": "startup|resume|compact",
+        "hooks": [ { "type": "command", "command": "node ../../common/hooks/session-start.js" } ] }
+    ]
+  }
+}

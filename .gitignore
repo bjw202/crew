@@ -1,0 +1,4 @@
+bots/*/.env
+bots/*/현재방
+bots/*/.claude/settings.json
+.DS_Store
