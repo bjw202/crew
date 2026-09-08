@@ -14,7 +14,7 @@ Claude Code 세션 다섯이 채팅 봇으로 미니디스코드 방에 들어�
 ```mermaid
 flowchart LR
     H[사람<br/>의뢰인]
-    subgraph 미니디스코드 방 = 과제 하나
+    subgraph ROOM["미니디스코드 방 = 과제 하나"]
         O[orchestrator<br/>지휘]
         A[analyst<br/>분석]
         R[researcher<br/>바깥 지식]
@@ -235,18 +235,18 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-    subgraph 지난 과제 yield-2026q3
+    subgraph PAST["지난 과제 yield-2026q3"]
         W1[wiki/etch-rate.md] -- 결재된 것만 --> D[knowledge/domain/etch-rate.md]
         I1[archivist/index.md]
-        P1[knowledge/projects/yield-2026q3.md<br/>status closed · 결론 · decisions 요약]
+        P1["knowledge/projects/yield-2026q3.md<br/>status closed · 결론 · decisions 요약"]
     end
     KI[knowledge/index.md]
     KI --> D & P1
-    subgraph 다음 과제 yield-2027q1
+    subgraph NEXT["다음 과제 yield-2027q1"]
         C2[archivist 작업 1] -- 1 훑기 --> KI
         C2 -- 2 걸린 방으로 --> I1
         C2 -- 3 원본까지 --> R[inbox/…/line3.csv]
-        C2 --> PK[00-prior-knowledge.md<br/>"옛 방 wiki 와 원본 경로가 닿음"]
+        C2 --> PK["00-prior-knowledge.md<br/>옛 방 wiki 와 원본 경로가 닿음"]
     end
 ```
 
