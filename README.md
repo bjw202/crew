@@ -64,7 +64,7 @@ flowchart TB
         K["훅 session-start.js<br/>깨어날 때 상태 파일을 문맥에 실어 줌"]
         M["memory.md (50줄)<br/>일하는 방법만"]
     end
-    subgraph 방["작업장 rooms/<방>/analyst/"]
+    subgraph 방["작업장 rooms/방/analyst/"]
         HF["handoff.md (6줄)<br/>지금 몇 번 작업, 어느 단계"]
         NT["task-N-notes.md<br/>가설·확인한 것·읽은 파일·다음 한 걸음"]
         OUT["task-N-*.md<br/>산출물 · 보고 · 근거 로그"]
@@ -93,21 +93,21 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    subgraph 방["rooms/<방>/ (과제 하나, git 하나)"]
+    subgraph 방["rooms/방/ (과제 하나, git 하나)"]
         direction TB
         ST["orchestrator/state.md<br/>회차·커서·대기 목록·작업표"]
         DC["orchestrator/decisions.md (추가만)<br/>누가·무엇을·왜·어느 메시지에서 정했나"]
         CH["orchestrator/chronicle.md (추가만)<br/>통과한 작업 한 줄씩"]
-        HF["<worker>/handoff.md · task-N-notes.md"]
+        HF["worker/handoff.md · task-N-notes.md"]
         IX["archivist/index.md<br/>이 방의 모든 파일 한 줄씩"]
-        WK["archivist/wiki/<topic>.md<br/>주제별 현재 앎 (아는 것/근거/모르는 것/이력)"]
+        WK["archivist/wiki/topic.md<br/>주제별 현재 앎 (아는 것/근거/모르는 것/이력)"]
         IN["archivist/inbox/<br/>사람이 준 원본 + 사이드카 .md"]
     end
     subgraph 회사["knowledge/ (회사 전체, git 하나)"]
         direction TB
         KI["index.md<br/>domain 페이지 + 방 목록"]
-        KD["domain/<topic>.md<br/>결재되어 승격된 앎"]
-        KP["projects/<방>.md<br/>방 열 때 등록, 끝날 때 마감"]
+        KD["domain/topic.md<br/>결재되어 승격된 앎"]
+        KP["projects/방.md<br/>방 열 때 등록, 끝날 때 마감"]
     end
     IN --> IX --> WK -- 결재 후 승격 --> KD
     KP -. 가리킴 .-> IX
