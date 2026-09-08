@@ -412,6 +412,8 @@ cd /Users/나/work/crew/bots/analyst && claude --setting-sources project,local -
   훅은 상대 경로(`node ../../common/hooks/…`)로 되지만 **상태줄은 상대 경로를 주면 Claude Code 가 아예 부르지 않는다**(실측: 75초 동안 0회 호출).
   보이는 것은 `🤖 봇 이름 · 🏠 방 · 모델 · CW 사용률 · 🌿 브랜치` 한 줄이다. 터미널 다섯을 띄워 놓고 어느 것이 누구인지 보려는 것이므로,
   봇 이름과 방은 stdin 이 아니라 폴더 이름과 `current-room` 파일에서 읽는다 — 입력이 비어도 틀리지 않는다.
+  **Claude Code 는 이 명령을 PATH 가 빈 환경에서 부른다**(실측). 그러면 `basename`·`jq`·`git` 이 전부 실패해 로봇 이모지 하나만 남으므로,
+  스크립트가 스스로 PATH 를 채우고 봇 이름과 방은 외부 명령 없이 bash 문법만으로 구한다.
   사람 개인 설정(`~/.claude/scripts/…`)에 기대지 않고 `jq` 가 없어도 돈다. 모델 값을 못 읽으면 그 칸을 비우고
   받은 입력을 `bots/<봇>/.statusline-debug.json` 에 한 벌 남긴다 — 왜 없는지는 그 파일을 보면 안다.
 - 회차가 닫히면 orchestrator 가 회고를 쓴다 (`rooms/<방>/orchestrator/retro-<회차>.md`). 숫자는 `scripts/retro.js` 가 세고 판단만 봇이 한다.
