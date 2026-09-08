@@ -96,7 +96,7 @@ async function install() {
   }
 
   console.log('\n④ 서버 명령 (minidiscord 폴더 안에서 — rooms 전체 경로가 들어 있다)');
-  log(`cd ${JSON.stringify(MINIDISCORD)} && MINIDISCORD_BOT_FILES_DIR=${JSON.stringify(ROOMS)} MINIDISCORD_BOT_RUN_LIMIT=0 npm start`);
+  log(`cd ${JSON.stringify(MINIDISCORD)} && MINIDISCORD_BOT_FILES_DIR=${JSON.stringify(ROOMS)} MINIDISCORD_BOT_RUN_LIMIT=0 npm run dev -w server`);
   console.log('\n⑤ 다음');
   if (!up) log('서버가 안 떠 있다 — 위 ④ 로 서버를 켜고 node setup.js 를 다시 돌리면 봇을 등록한다');
   else if (noToken.length) log(`토큰 없는 봇: ${noToken.join(', ')} — 위 ② 의 주의를 처리한 뒤 node setup.js 다시`);

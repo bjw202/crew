@@ -290,7 +290,7 @@ flowchart LR
 
 ```
 cd /Users/나/work/minidiscord          # ← 루트가 /Users/나/work 일 때
-MINIDISCORD_BOT_FILES_DIR="/Users/나/work/rooms" MINIDISCORD_BOT_RUN_LIMIT=0 npm start
+MINIDISCORD_BOT_FILES_DIR="/Users/나/work/rooms" MINIDISCORD_BOT_RUN_LIMIT=0 npm run dev -w server
 ```
 
 정확한 전체 경로가 들어간 이 명령은 아래 2) 의 `node setup.js` 가 마지막에 찍어 준다 — 그걸 복사해 쓰면 된다 (`rooms/` 폴더도 그때 만들어진다).
