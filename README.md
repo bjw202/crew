@@ -269,82 +269,102 @@ flowchart LR
 
 ---
 
-## 7. 설치 — clone 하고 명령 하나
+## 7. 설치와 기동 — 프로세스 셋, 명령 넷
 
-준비물은 셋이다: Node, Claude Code(`claude`), 그리고 형제 폴더에 받아 둔 minidiscord.
+> 아래에서 **루트 = `/Users/나/work`** (예시) 로 쓴다. 자기 경로로 바꿔 읽는다. 상대 경로는 한 번도 쓰지 않는다.
 
-```
-루트/
-  minidiscord/     ← 먼저 받아 둔다:  git clone <minidiscord> && cd minidiscord && npm install && npm run build -w channel
-  crew/            ← 이 저장소:        git clone <crew>
-  rooms/           ← setup.js 가 만든다
-  knowledge/       ← setup.js 가 만든다
-```
+### 한눈에 — 무엇이 어디서 뜨나
 
-순서는 셋이다.
+| | 무엇 | 실행 폴더 | 실제 명령 | 붙는 환경변수 | 계속 떠 있나 |
+|---|---|---|---|---|---|
+| ① | **minidiscord 서버** (채팅 서버 + 봇 게이트웨이) | `/Users/나/work/minidiscord` | `npm run dev -w server` | `MINIDISCORD_BOT_FILES_DIR`, `MINIDISCORD_BOT_RUN_LIMIT` — 둘 다 **서버**가 읽는다 | 예 — 터미널 하나 상주 |
+| ② | **설치·등록 도구** (`setup.js`) | `/Users/나/work/crew` | `node setup.js` · `node setup.js join <방>` | 없음 (minidiscord 가 형제 폴더가 아닐 때만 `MINIDISCORD_DIR`) | 아니오 — 끝나면 종료 |
+| ③ | **봇 세션 다섯** (Claude Code) | `/Users/나/work/crew/bots/<봇>` 각각 | `node setup.js start all` 이 띄운다 | 없음 — 토큰은 `bots/<봇>/.mcp.json` 안에 있다 | 예 — tmux 창 다섯 상주 |
 
-**1) minidiscord 서버를 crew 조건으로 켠다**
+①과 ③은 서로 다른 프로세스다. ①은 방과 메시지를 들고 있는 서버이고, ③은 그 서버에 봇으로 붙는 Claude Code 다섯이다. ②는 그 둘을 이어 주는 일회성 도구다.
 
-- **어디서**: `루트/minidiscord/` 폴더 안에서 (crew 폴더가 아니다). 터미널 하나를 차지하고 계속 떠 있는다.
-- **경로**: `MINIDISCORD_BOT_FILES_DIR` 에는 `rooms` 폴더의 **전체 경로**를 쓴다. 서버는 crew 가 어디 있는지 모르므로 상대 경로나 "루트/…" 같은 줄임말은 안 된다.
+### 준비물
 
 ```
-cd /Users/나/work/minidiscord          # ← 루트가 /Users/나/work 일 때
-MINIDISCORD_BOT_FILES_DIR="/Users/나/work/rooms" MINIDISCORD_BOT_RUN_LIMIT=0 npm run dev -w server
+/Users/나/work/
+  minidiscord/     git clone <minidiscord> && cd minidiscord && npm install && npm run build -w channel
+  crew/            git clone <crew>
+  rooms/           ② 가 만든다
+  knowledge/       ② 가 만든다
 ```
 
-정확한 전체 경로가 들어간 이 명령은 아래 2) 의 `node setup.js` 가 마지막에 찍어 준다 — 그걸 복사해 쓰면 된다 (`rooms/` 폴더도 그때 만들어진다).
+Node 와 Claude Code(`claude`) 가 있어야 한다. tmux 가 있으면 ③ 을 창 다섯으로 띄워 준다(없어도 된다).
 
-- `MINIDISCORD_BOT_FILES_DIR` — 봇이 방에 파일을 첨부할 수 있는 범위. 없으면 봇 첨부가 전부 버려진다.
-- `MINIDISCORD_BOT_RUN_LIMIT=0` — "사람 글 없이 봇 글 6개면 멈춤" 규칙 해제. 안 끄면 배분 몇 번 뒤 worker 가 조용히 멈춘다.
+### 순서 — 넷
 
-처음 설치라면 순서를 2) → 1) → 2) 로 해도 된다: `node setup.js` 를 한 번 돌려 서버 명령을 받고, 서버를 켠 뒤, 다시 `node setup.js` 를 돌리면 봇 등록까지 된다.
-
-**2) crew 폴더에서 설치 명령 하나**
-
-- **어디서**: `루트/crew/` 폴더 안에서.
+**(a) crew 에서 `node setup.js` 한 번** — 폴더를 만들고 서버 명령을 찍어 준다
 
 ```
 cd /Users/나/work/crew && node setup.js
 ```
 
-이 한 번이 다음을 다 한다. 몇 번 돌려도 안전하다(있는 것은 건너뛴다).
+`rooms/`·`knowledge/` 가 생기고, 봇 설정 파일이 생기고, 마지막에 ④ 서버 명령이 **자기 컴퓨터의 전체 경로가 들어간 채로** 출력된다. 서버가 아직 없으니 봇 등록은 건너뛴다.
 
-| 하는 일 | 결과 |
-|---|---|
-| `rooms/` `knowledge/` 만들기 | crew 옆에 폴더 둘 (knowledge 는 git) |
-| 봇 다섯을 minidiscord 에 등록 | 서버가 떠 있으면 API 로 등록하고 토큰을 `bots/<봇>/.env` 에 적는다. 웹에서 복사할 일이 없다 |
-| 봇마다 설정 생성 | `bots/<봇>/.claude/settings.json`(허용·거부 규칙, 훅, 자동 압축) · `bots/<봇>/.mcp.json`(채널 플러그인 + 토큰) |
-
-서버가 아직 안 떠 있으면 등록만 건너뛰고 나머지를 한다. 서버를 켜고 다시 돌리면 등록한다.
-생성 파일(`settings.json` · `.env` · `.mcp.json`)은 절대 경로와 토큰이 들어 있어 git 에 넣지 않는다 — 이 저장소에 없는 게 정상이다.
-
-**3) 방을 열고 봇을 띄운다** (역시 `루트/crew/` 안에서)
+**(b) minidiscord 에서 서버 기동** — (a) 가 찍어 준 명령을 그대로 붙여 넣는다 (터미널 하나가 계속 잡힌다)
 
 ```
+cd /Users/나/work/minidiscord && MINIDISCORD_BOT_FILES_DIR="/Users/나/work/rooms" MINIDISCORD_BOT_RUN_LIMIT=0 npm run dev -w server
+```
+
+두 환경변수는 **서버 것**이다. 봇이나 setup.js 는 읽지 않는다.
+
+- `MINIDISCORD_BOT_FILES_DIR` — 첨부가 **저장되는 곳이 아니다**. 봇이 "이 파일 첨부해 줘" 하고 넘긴 경로 중 **이 폴더 안의 것만** 서버가 읽어 자기 `uploads/` 로 복사한다(허용 범위). 상대 경로를 쓰면 서버를 띄운 폴더(`minidiscord/rooms`) 기준으로 풀려 범위 밖이 되고 첨부가 조용히 버려진다 — 그래서 전체 경로다.
+- `MINIDISCORD_BOT_RUN_LIMIT=0` — "사람 글 없이 봇 글 6개면 `@TO` 를 참고용으로 내림" 규칙 해제. 안 끄면 배분 몇 번 뒤 worker 가 조용히 멈춘다.
+
+확인: 다른 터미널에서 `curl http://127.0.0.1:3000/api/health` → `{"ok":true}`.
+
+**(c) crew 에서 `node setup.js` 다시** — 이번엔 봇을 등록한다
+
+```
+cd /Users/나/work/crew && node setup.js
+```
+
+서버가 떠 있으니 봇 다섯을 API 로 등록하고 토큰을 `bots/<봇>/.env` 에 적은 뒤, 토큰이 든 `bots/<봇>/.mcp.json` 을 만든다. 웹에서 복사할 일이 없다. 몇 번 돌려도 안전하다(등록된 봇은 "있음"으로 건너뛴다).
+
+**(d) crew 에서 방 열기와 봇 띄우기**
+
+```
+cd /Users/나/work/crew
 node setup.js join 수율개선-2026q3     # 방을 만들고(있으면 그대로) 봇 다섯을 참여시킨다
-node setup.js start all                # 봇 다섯을 tmux 창 하나씩에 띄운다
-tmux attach -t crew                    # 창마다 첫 기동 확인 두 번을 눌러 준다 (아래)
+node setup.js start all                # 봇 다섯을 tmux 세션 crew 의 창 하나씩에 띄운다
+tmux attach -t crew                    # 창마다 아래 확인 두 번을 눌러 준다. 창 이동: Ctrl-b n
 ```
 
-첫 기동 때 Claude Code 가 창마다 두 번 묻는다. 이건 Claude Code 의 안전장치라 건너뛸 수 없다.
+봇 세션은 **`bots/<봇>/` 폴더를 cwd 로** 뜬다. 그래서 그 봇의 `.mcp.json`(토큰·채널 플러그인)과 `.claude/settings.json`(권한·훅) 이 그 폴더에 있고, 봇은 자기 폴더 이름으로 자기가 누구인지 안다. `start all` 이 실제로 실행하는 것은 봇마다 이 한 줄이다:
 
-1. "이 폴더를 신뢰하는가" → `Yes, I trust this folder` (폴더마다 한 번만 묻는다)
-2. "개발 채널을 여는가" → `I am using this for local development` (기동할 때마다 묻는다)
+```
+cd /Users/나/work/crew/bots/analyst && claude --setting-sources project,local --strict-mcp-config --mcp-config .mcp.json --dangerously-load-development-channels server:minidiscord-channel
+```
+
+첫 기동 때 Claude Code 가 창마다 두 번 묻는다. Claude Code 의 안전장치라 건너뛸 수 없다.
+
+1. "이 폴더를 신뢰하는가" → `Yes, I trust this folder` (폴더마다 한 번만)
+2. "개발 채널을 여는가" → `I am using this for local development` (기동할 때마다)
 
 시작 화면에 `Channels (experimental) messages from server:minidiscord-channel inject directly in this session` 이 보이고, 웹의 방 머리에서 봇 칩이 🟢 이면 붙은 것이다. 이제 웹에서 `@TO(orchestrator) 과제 시작: <목표 한 줄>` 에 파일을 붙여 보낸다.
 
-tmux 가 없으면 `start all` 이 명령 다섯 줄을 찍어 주니 터미널 다섯에 하나씩 붙여 넣는다. 봇 하나만 띄우려면 `node setup.js start analyst`.
+tmux 가 없으면 `start all` 이 위 한 줄을 봇마다 찍어 주니 터미널 다섯에 하나씩 붙여 넣는다. 봇 하나만 띄우려면 `node setup.js start analyst`.
+
+### 생성 파일은 git 에 없다
+
+`bots/<봇>/.claude/settings.json` · `.env` · `.mcp.json` 은 (a)(c) 가 만든다. 절대 경로와 토큰이 들어 있어 git 에 넣지 않는다 — 이 저장소에 없는 게 정상이다. 설치 위치를 옮기면 `node setup.js` 를 다시 돌린다.
 
 ### 자주 막히는 곳
 
 | 증상 | 이유 | 하는 일 |
 |---|---|---|
-| `setup.js` 가 "서버 없음" | minidiscord 가 안 떠 있거나 주소가 다르다 | 1) 을 먼저. 주소가 다르면 `MINIDISCORD_URL=http://호스트:포트 node setup.js` |
+| `setup.js` 가 "서버 없음" | ① 이 안 떠 있거나 주소가 다르다 | (b) 를 먼저. 주소가 다르면 `MINIDISCORD_URL=http://호스트:포트 node setup.js` |
 | "…은 서버에 있는데 .env 에 토큰이 없다" | 예전에 등록한 봇의 토큰을 잃었다 | 웹 사이드바에서 그 봇을 삭제하고 `node setup.js` 다시 (토큰은 등록 때 한 번만 나온다) |
-| `channel/dist/index.js` 없음 | minidiscord 채널 플러그인을 안 빌드했다 | minidiscord 폴더에서 `npm run build -w channel`. 다른 위치면 `MINIDISCORD_DIR=<경로> node setup.js` |
+| `channel/dist/index.js` 없음 | 채널 플러그인을 안 빌드했다 | minidiscord 에서 `npm run build -w channel`. 다른 위치면 `MINIDISCORD_DIR=<경로> node setup.js` |
+| `npm start` 가 "Missing script" | 그 명령은 없다 | 서버는 `npm run dev -w server` |
 | 봇 칩이 ⚪ 그대로 | 세션은 떴는데 토큰이 틀리거나 `.mcp.json` 이 옛것 | `node setup.js` 다시 돌린 뒤 봇 재시작 |
 | `@TO` 가 "초대되지 않았습니다" | 그 방에 봇 참여를 안 했다 | `node setup.js join <방>` |
+| 봇이 첨부한 파일이 방에 안 뜬다 | `MINIDISCORD_BOT_FILES_DIR` 가 없거나 상대 경로 | (b) 의 명령대로 전체 경로로 서버 재기동 |
 
 ## 8. 폴더
 
