@@ -2,15 +2,13 @@
 // crew 설치·기동 도구 — 사람이 돌린다. 봇은 이 파일을 쓰지 않는다.
 //
 //   node setup.js              설치: 폴더·설정·.env·(서버가 떠 있으면) 봇 등록·.mcp.json  — 몇 번 돌려도 안전
-//   node setup.js start all    봇 다섯을 터미널 창 하나씩에 띄운다 (맥 Terminal.app · 윈도우 cmd · 그 밖은 명령 출력)
-//   node setup.js start analyst  봇 하나만
 //   node setup.js join <방>    방을 만들고(있으면 그대로) 봇 다섯을 참여시킨다
 //
 // 위치: minidiscord 는 기본 루트/minidiscord (crew 의 형제). 다른 곳이면 MINIDISCORD_DIR=<경로>.
 //       서버 주소는 MINIDISCORD_URL (기본 http://127.0.0.1:3000).
 const fs = require('fs');
 const path = require('path');
-const { execSync, spawnSync } = require('child_process');
+const { execSync } = require('child_process');
 
 const CREW = path.resolve(__dirname);
 const ROOT = path.dirname(CREW);
@@ -100,7 +98,11 @@ async function install() {
   console.log('\n⑤ 다음');
   if (!up) log('서버가 안 떠 있다 — 위 ④ 로 서버를 켜고 node setup.js 를 다시 돌리면 봇을 등록한다');
   else if (noToken.length) log(`토큰 없는 봇: ${noToken.join(', ')} — 위 ② 의 주의를 처리한 뒤 node setup.js 다시`);
-  else log('node setup.js join <방이름>   → 방 만들고 봇 다섯 참여\n  node setup.js start all       → 봇 다섯 띄우기');
+  else {
+    log('node setup.js join <방이름>   → 방 만들고 봇 다섯 참여');
+    console.log('\n⑥ 봇 기동 (터미널을 다섯 열어 하나씩 붙여 넣는다 — 봇은 자기 폴더에서 뜬다)');
+    for (const bot of BOTS) log(`cd ${JSON.stringify(path.join(CREW, 'bots', bot))} && claude ${CLAUDE_ARGS.join(' ')}`);
+  }
 }
 
 // ── 방 열기: 방 만들고 봇 다섯 참여 ──
@@ -119,41 +121,11 @@ async function join(roomName) {
   log(`웹에서 방 ${roomName} 을 열고 "@TO(orchestrator) 과제 시작: <목표 한 줄>" 로 시작한다.`);
 }
 
-// ── 봇 띄우기: 봇마다 터미널 창 하나 (맥 Terminal.app · 윈도우 cmd · 그 밖은 명령 출력) ──
-function start(which) {
-  const targets = which === 'all' ? BOTS : [which];
-  for (const b of targets) {
-    if (!BOTS.includes(b)) throw new Error(`모르는 봇: ${b} (${BOTS.join(', ')})`);
-    if (!fs.existsSync(path.join(CREW, 'bots', b, '.mcp.json'))) throw new Error(`bots/${b}/.mcp.json 이 없다 — node setup.js 먼저`);
-  }
-  const dir = b => path.join(CREW, 'bots', b);
-  const line = b => `cd ${JSON.stringify(dir(b))} && claude ${CLAUDE_ARGS.join(' ')}`;
-  if (process.platform === 'darwin') {
-    for (const b of targets) {
-      // Terminal.app 에 새 창을 열고 그 안에서 명령을 실행한다. 창 제목은 봇 이름.
-      const script = `printf '\\033]0;crew ${b}\\007'; ${line(b)}`;
-      spawnSync('osascript', ['-e', `tell application "Terminal" to do script ${JSON.stringify(script)}`, '-e', 'tell application "Terminal" to activate'], { stdio: 'ignore' });
-      log(`창 열림  ${b}`);
-    }
-    console.log('\n  창마다 첫 기동 확인 두 번(폴더 신뢰 · 개발 채널 경고)을 눌러 준다. 창 제목이 봇 이름이다.');
-  } else if (process.platform === 'win32') {
-    for (const b of targets) {
-      spawnSync('cmd', ['/c', 'start', `"crew ${b}"`, 'cmd', '/k', `cd /d "${dir(b)}" && claude ${CLAUDE_ARGS.join(' ')}`], { stdio: 'ignore', shell: true });
-      log(`창 열림  ${b}`);
-    }
-    console.log('\n  창마다 첫 기동 확인 두 번(폴더 신뢰 · 개발 채널 경고)을 눌러 준다.');
-  } else {
-    console.log('터미널 창을 자동으로 열 수 없는 환경이다 — 터미널을 하나씩 열어 아래를 붙여 넣는다:');
-    for (const b of targets) console.log('  ' + line(b));
-  }
-}
-
 (async () => {
   const [cmd, arg] = process.argv.slice(2);
   try {
     if (!cmd) await install();
     else if (cmd === 'join') await join(arg);
-    else if (cmd === 'start') start(arg || 'all');
     else throw new Error(`모르는 명령: ${cmd}`);
   } catch (e) { console.error('오류: ' + e.message); process.exit(1); }
 })();
