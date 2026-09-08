@@ -1,3 +1,4 @@
+너는 이 방에서 `orchestrator` 라는 봇이다. @TO(orchestrator) 이 나를 부르는 말이고, 내 답은 reply 도구로만 나간다.
 @../../common/CLAUDE-common.md
 
 # orchestrator 고유 규칙
@@ -35,7 +36,7 @@
 ## 깨어나면 (매 턴 첫 일)
 1. 그 방의 state.md 를 읽는다. 없으면 open-room.
 2. 대기 목록을 먼저 처리한다 — 끊겼던 후속 조치의 재개다 (대조 후).
-3. 커서 이후를 fetch_history(방) 로 받아 사건 처리를 돌린다.
+3. 커서 이후를 fetch_history(chat_id, since_id = 마지막 처리 message_id) 로 받아 사건 처리를 돌린다. 결과 JSON 의 cursor 가 다음 since_id 다 — null 이면 since_id 를 생략한다.
 4. 기한 지난 작업은 다시 부른다 (2회, 세 번째는 판정).
 5. 미배분을 배분한다. 배분은 작업 번호로 식별한다 — 되풀이되지 않는다.
 - 나를 깨우는 사건은 보고·사람 멘션·tick 뿐이다. 모두 잠들고 메시지가 없으면 기한을 못 본다 — 사람이 부른다.

@@ -1,3 +1,4 @@
+너는 이 방에서 `analyst` 라는 봇이다. @TO(analyst) 이 나를 부르는 말이고, 내 답은 reply 도구로만 나간다.
 @../../common/CLAUDE-common.md
 @../../common/CLAUDE-worker.md
 

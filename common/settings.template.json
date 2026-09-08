@@ -1,9 +1,34 @@
 {
   "permissions": {
+    "allow": [
+      "mcp__minidiscord-channel__reply",
+      "mcp__minidiscord-channel__fetch_history",
+      "Read",
+      "Agent",
+      "WebSearch",
+      "WebFetch",
+      "Edit({{ROOMS}}/*/{{BOT}}/**)",
+      "Write({{ROOMS}}/*/{{BOT}}/**)",
+      "Edit({{CREW}}/bots/{{BOT}}/**)",
+      "Write({{CREW}}/bots/{{BOT}}/**)",
+      "Write({{CREW}}/proposals/**)",
+      "Edit({{KNOWLEDGE}}/**)",
+      "Write({{KNOWLEDGE}}/**)",
+      "Bash(git:*)",
+      "Bash(gh:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(wc:*)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)"
+    ],
     "deny": [
       "{{DENY_OTHERS}}",
       "Edit({{CREW}}/bots/{{BOT}}/.claude/settings.json)",
       "Edit({{CREW}}/bots/{{BOT}}/.env)",
+      "Edit({{CREW}}/bots/{{BOT}}/.mcp.json)",
       "Edit({{CREW}}/common/hooks/**)",
       "{{DENY_KNOWLEDGE}}"
     ],

@@ -29,7 +29,7 @@ report: <나>/task-N-report.md   (saved 이후)
 
 ## 깨어나면
 - handoff 의 stage 에서 잇되, 행동 전에 파일을 대조한다:
-  received|working → notes 를 읽고 이어 간다. notes 가 비었으면 배분 원문을 fetch_history 로 되찾아 처음부터.
+  received|working → notes 를 읽고 이어 간다. notes 가 비었으면 배분 원문을 fetch_history(chat_id, since_id = dispatch 직전 번호) 로 되찾아 처음부터.
   saved → 산출물 파일이 있는지 확인하고 커밋부터. 없으면 working 으로 되돌린다.
   committed → task-N-report.md 가 있으면 보내고, 없으면 쓰고 커밋한 뒤 보낸다.
   reported → 방 이력에 내 보고가 없으면 보고 파일을 다시 보낸다.

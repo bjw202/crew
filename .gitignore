@@ -2,3 +2,4 @@ bots/*/.env
 bots/*/current-room
 bots/*/.claude/settings.json
 .DS_Store
+bots/*/.mcp.json
