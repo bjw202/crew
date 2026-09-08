@@ -26,7 +26,10 @@ description: 새 과제 방이 열리면("과제 시작") 작업장 폴더·git�
    목표: <목표 한 줄>
    ```
    decisions.md 와 chronicle.md 는 머리글 한 줄로 만든다.
-4. 첫 커밋: `git -C 루트/rooms/<방> add -A && git -C 루트/rooms/<방> commit -m "orchestrator 방 열기" && git -C 루트/rooms/<방> push -u origin main`
+4. 첫 커밋 — 명령을 셋으로 나눠 부른다(공통 규칙: Bash 한 번에 하나):
+   `git -C 루트/rooms/<방> add -A`
+   `git -C 루트/rooms/<방> commit -m "orchestrator 방 열기"`
+   `git -C 루트/rooms/<방> push -u origin main`
    (방 열기 커밋만 예외적으로 -A. 이후는 경로 지정 커밋)
 5. knowledge 에 방 등록 — 루트/knowledge/projects/<방>.md 를 지금 만든다 (마감 때 갱신):
    ```
@@ -36,7 +39,8 @@ description: 새 과제 방이 열리면("과제 시작") 작업장 폴더·git�
    ---
    목표 / 상태: 진행 중 (회차 1) / 원본 자료: 루트/rooms/<방>/archivist/index.md / 결론: (아직 없음)
    ```
-   `git -C 루트/knowledge commit -m "orchestrator <방> 등록" -- projects/<방>.md && git -C 루트/knowledge push`
+   `git -C 루트/knowledge commit -m "orchestrator <방> 등록" -- projects/<방>.md`
+   `git -C 루트/knowledge push`
    (knowledge/index.md 의 방 줄은 archivist 가 작업 1에서 더한다.)
 6. archivist 첫 배분 (6줄):
    ```

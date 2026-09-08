@@ -183,7 +183,7 @@ sequenceDiagram
 
 ### 5-3. 작업 중간에 압축이 온다 (또는 사람이 `/clear` 를 친다)
 
-analyst가 작업 2를 하다가 문맥이 70만 토큰을 넘어 자동 압축이 됐다.
+analyst가 작업 2를 하다가 문맥이 65만 토큰을 넘어 자동 압축이 됐다.
 
 ```mermaid
 sequenceDiagram
@@ -401,18 +401,37 @@ cd /Users/나/work/crew/bots/analyst && claude --setting-sources project,local -
 ## 10. 운영 습관
 
 - 과제 하나가 끝나면 봇 다섯의 터미널에서 `/clear` 를 한 번씩 친다. 안 해도 훅과 파일이 받치지만, 하면 가장 깨끗하다.
-- 자동 압축은 봇 전부 70만 토큰(`autoCompactWindow`, `common/settings.template.json`)에서 돈다. 봇 하나만 바꾸려면 `bots/<봇>/.claude/settings.local.json` 에 같은 키를 두면 그쪽이 이긴다.
+- 자동 압축은 봇 전부 65만 토큰(`autoCompactWindow`, `common/settings.template.json`)에서 돈다. 모델 창(100만)의 65%다.
+  압축은 프롬프트 캐시를 끊으므로 자주 걸면 오히려 비싸다 — 그래서 문턱을 낮게 잡지 않고 긴 과제용 안전망으로만 둔다.
+  봇 하나만 바꾸려면 `bots/<봇>/.claude/settings.local.json` 에 같은 키를 두면 그쪽이 이긴다.
 - 도구 승인은 `settings.template.json` 의 allow 목록(채널 reply·fetch_history, Read, 자기 폴더 쓰기, git 등)으로 미리 열어 둔다. 목록 밖 도구는 방에 승인 요청이 올라오고 사람이 `yes <ID>` 로 답한다.
+  allow 는 명령 이름으로 맞춘다. 봇이 `/usr/bin/git …` 처럼 절대 경로로 부르거나 `a && b` 로 이어 붙이면 목록과 맞지 않아 승인이 올라온다 —
+  그래서 공통 규칙이 "Bash 한 번에 명령 하나, 이름으로 부른다"고 못박는다. 승인 요청이 한 자릿수를 넘으면 규칙이 아니라 allow 목록을 의심한다.
+- 상태줄은 봇 설정에 직접 들어간다. 봇은 `--setting-sources project,local` 로 뜨므로 `~/.claude/settings.json` 의 `statusLine` 이 적용되지 않는다.
+  `setup.js` 가 `~/.claude/scripts/statusline.sh` 를 찾아 넣고, 없으면 키를 빼 둔다. 다른 스크립트를 쓰려면 `CREW_STATUSLINE=<경로> node setup.js`.
+- 회차가 닫히면 orchestrator 가 회고를 쓴다 (`rooms/<방>/orchestrator/retro-<회차>.md`). 숫자는 `scripts/retro.js` 가 세고 판단만 봇이 한다.
+  턴·토큰·승인 횟수는 봇에게 보이지 않는다 — 사람이 `node scripts/retro-cost.js --since <날짜> --room <방번호>` 로 잰다.
+  회고는 작업이 아니다. 번호를 주지 않고 배분하지도 검토하지도 않는다. 방 셋을 마칠 때까지 두고, 계속할지는 그때 사람이 정한다.
 - 지침·스킬·훅을 고쳤으면 해당 봇을 재시작한다.
 
-## 11. S1에서 확인할 것 (설계가 가정만 한 것)
+## 11. S1에서 확인된 것 (2026-09-08, 방 `수율개선-2026q3`, 회차 둘·작업 아홉)
 
-- settings의 `Edit(//<절대경로>/rooms/*/<봇>/**)` — 경로 중간 `*`와 윈도우 드라이브 문자(`//C:/…`) 문법이 먹는가
-- 봇 다섯이 한 git 안에 있어도 자동 기억이 섞이지 않는가 (`env.CLAUDE_CODE_DISABLE_AUTO_MEMORY` 가 안 먹으면 `autoMemoryDirectory` 로)
-- `@memory.md` import가 자동 압축 뒤에도 사는가
-- `session-start.js` 가 `current-room` 파일로 방별 handoff·notes·state 를 되읽는가 (`/clear` 뒤에도)
-- 압축이 작업 중간에 와도 `task-N-notes.md` 만으로 이어지는가
+| 가정 | 결과 |
+|---|---|
+| settings의 `Edit(//<절대경로>/rooms/*/<봇>/**)` 문법이 먹는가 | **먹는다.** 커밋 51개 전수 확인 — 남의 폴더에 쓴 흔적 0건 (윈도우는 아직 안 봤다) |
+| 봇 다섯이 한 git 안에 있어도 자동 기억이 섞이지 않는가 | **안 섞였다.** `CLAUDE_CODE_DISABLE_AUTO_MEMORY` 가 먹었다 |
+| `session-start.js` 가 방별 상태를 되읽는가 | **되읽는다.** 세션이 끊겼다가 `state.md` 로 정확히 이어졌다 |
+| `@memory.md` import 가 자동 압축 뒤에도 사는가 | **모른다.** 압축이 한 번도 안 걸렸다(문턱 70만, 실제 최고 문맥 22만) — 그래서 문턱을 65만으로 낮췄지만 여전히 긴 과제에서만 걸린다 |
+| 압축이 작업 중간에 와도 `task-N-notes.md` 만으로 이어지는가 | **모른다.** 같은 이유로 시험되지 않았다 |
+
+S1 이 새로 드러낸 것:
+
+- **도구 승인이 78회 올라왔다.** allow 목록은 명령 이름으로 맞는데 봇이 절대 경로와 `&&` 복합으로 불렀다. 규칙(10절)과 allow 목록을 함께 고쳤다.
+- **문맥이 안 비워진다.** 다섯 세션 모두 압축 0회, 호출당 평균 문맥 11만 토큰. 캐시가 받쳐 주므로 성능 문제는 아니지만 비용의 절반이 여기 있다.
+- **tick 이 없다.** `minidiscord` 서버에 주기적으로 봇을 깨우는 코드가 없다(`server/src` 전수 검색 0건). S1 에서 봇 전부가 64분 동안 멈춰 있었고 사람이 부를 때까지 아무도 몰랐다. 규칙으로는 못 고친다 — 서버에 tick 을 넣거나, 사람이 이따금 부르는 수밖에 없다.
+- **되돌이 멘션이 모양을 바꿔 재발했다.** 무멘션 되돌이는 안 났지만 "확인 답장" 왕복이 세 번 났다. worker 규칙에 "통과·접수·대기 통지에는 답하지 않는다"를 넣었다.
+- **멘션 카운터가 회차 2 내내 멈춰 있었다.** 기록 2, 실제 21. 되돌이를 잡으라고 둔 장치가 장식이 됐다. 사건마다 다시 세도록 고쳤고, `scripts/retro.js` 가 배분 수와 견줘 멈춤을 잡아낸다.
 
 ## 12. 장치는 셋
 
-지침(이 저장소의 md 파일들) · `open-room` 스킬 · `session-start.js` 훅. 설치용 `setup.js` 는 봇이 아니라 사람이 한 번 돌린다. 그 외 스크립트·색인·훅은 없다.
+지침(이 저장소의 md 파일들) · `open-room` 스킬 · `session-start.js` 훅. 설치용 `setup.js` 와 회고용 `scripts/retro.js`·`scripts/retro-cost.js` 는 봇의 장치가 아니라 도구다 — 앞의 둘은 사람이, `retro.js` 는 orchestrator 가 회차 닫힘에 한 번 돌린다. 그 외 스크립트·색인·훅은 없다.

@@ -12,6 +12,7 @@
       "Edit({{CREW}}/bots/{{BOT}}/**)",
       "Write({{CREW}}/bots/{{BOT}}/**)",
       "Write({{CREW}}/proposals/**)",
+      "Edit({{CREW}}/proposals/**)",
       "Edit({{KNOWLEDGE}}/**)",
       "Write({{KNOWLEDGE}}/**)",
       "Bash(git:*)",
@@ -22,7 +23,17 @@
       "Bash(tail:*)",
       "Bash(wc:*)",
       "Bash(mkdir:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(cat:*)",
+      "Bash(sed:*)",
+      "Bash(diff:*)",
+      "Bash(find:*)",
+      "Bash(sort:*)",
+      "Bash(uniq:*)",
+      "Bash(awk:*)",
+      "Bash(date:*)",
+      "Bash(python3:*)",
+      "Bash(node:*)"
     ],
     "deny": [
       "{{DENY_OTHERS}}",
@@ -35,8 +46,9 @@
     "additionalDirectories": ["{{ROOMS_DIR}}", "{{KNOWLEDGE_DIR}}", "{{PROPOSALS_DIR}}"]
   },
   "env": { "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1" },
+  "statusLine": { "type": "command", "command": "{{STATUSLINE}}" },
   "autoCompactEnabled": true,
-  "autoCompactWindow": 700000,
+  "autoCompactWindow": 650000,
   "hooks": {
     "SessionStart": [
       { "matcher": "startup|resume|clear|compact",

@@ -44,7 +44,8 @@
 - orchestrator가 결재된 목록을 주면 루트/knowledge/domain/<topic>.md 로 복사. 같은 주제가 있으면 덧붙이고 updated 갱신.
   sources 는 방 경로 그대로 둔다 — 원본 공정 데이터는 올리지 않는다.
 - knowledge/index.md 의 domain 목록에 줄을 더하거나 갱신한다.
-- git -C 루트/knowledge commit -m "archivist <방> 작업 N: <topic>" -- domain/<topic>.md index.md && git -C 루트/knowledge push
+- 1) git -C 루트/knowledge commit -m "archivist <방> 작업 N: <topic>" -- domain/<topic>.md index.md
+  2) git -C 루트/knowledge push
 - 결재되지 않은 것은 올리지 않는다.
 
 @memory.md

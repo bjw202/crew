@@ -9,8 +9,12 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+const os = require('os');
 
 const CREW = path.resolve(__dirname);
+// 상태줄 — 봇은 --setting-sources project,local 로 뜨므로 ~/.claude/settings.json 의 statusLine 이 적용되지 않는다.
+// 그래서 봇 설정에 직접 적어 준다. 파일이 없는 컴퓨터에서는 키를 빼서 설정이 깨지지 않게 한다. CREW_STATUSLINE 로 바꿀 수 있다.
+const STATUSLINE = process.env.CREW_STATUSLINE || path.join(os.homedir(), '.claude', 'scripts', 'statusline.sh');
 const ROOT = path.dirname(CREW);
 const ROOMS = path.join(ROOT, 'rooms');
 const KNOWLEDGE = path.join(ROOT, 'knowledge');
@@ -83,7 +87,9 @@ async function install() {
       .replace('"{{DENY_OTHERS}}"', others.map(s => JSON.stringify(s)).join(', '))
       .replace('"{{DENY_KNOWLEDGE}}"', JSON.stringify(knowledgeDeny))
       .replace(/\{\{CREW\}\}/g, pat(CREW)).replace(/\{\{ROOMS\}\}/g, pat(ROOMS)).replace(/\{\{KNOWLEDGE\}\}/g, pat(KNOWLEDGE)).replace(/\{\{BOT\}\}/g, bot)
-      .replace('{{ROOMS_DIR}}', ROOMS.replace(/\\/g, '\\\\')).replace('{{KNOWLEDGE_DIR}}', KNOWLEDGE.replace(/\\/g, '\\\\')).replace('{{PROPOSALS_DIR}}', path.join(CREW, 'proposals').replace(/\\/g, '\\\\')));
+      .replace('{{ROOMS_DIR}}', ROOMS.replace(/\\/g, '\\\\')).replace('{{KNOWLEDGE_DIR}}', KNOWLEDGE.replace(/\\/g, '\\\\')).replace('{{PROPOSALS_DIR}}', path.join(CREW, 'proposals').replace(/\\/g, '\\\\'))
+      .replace('{{STATUSLINE}}', STATUSLINE.replace(/\\/g, '\\\\')));
+    if (!fs.existsSync(STATUSLINE)) delete json.statusLine;    // 없는 스크립트를 가리키면 아예 빼 둔다
     const dir = path.join(CREW, 'bots', bot, '.claude'); fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, 'settings.json'), JSON.stringify(json, null, 2) + '\n');
     if (!fs.existsSync(envFile(bot))) writeEnv(envFile(bot), { MINIDISCORD_TOKEN: '' });
