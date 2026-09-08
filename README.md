@@ -324,7 +324,16 @@ cd /Users/나/work/minidiscord && MINIDISCORD_BOT_FILES_DIR="/Users/나/work/roo
 cd /Users/나/work/crew && node setup.js
 ```
 
-서버가 떠 있으니 봇 다섯을 API 로 등록하고 토큰을 `bots/<봇>/.env` 에 적은 뒤, 토큰이 든 `bots/<봇>/.mcp.json` 을 만든다. 웹에서 복사할 일이 없다. 몇 번 돌려도 안전하다(등록된 봇은 "있음"으로 건너뛴다). 이 `.mcp.json` 은 minidiscord 웹의 `+ 봇 등록` 이 안내하는 것과 같은 파일이다 — 손으로 등록해도 결과가 같다.
+서버가 떠 있으니 봇 다섯을 API 로 등록하고 토큰을 `bots/<봇>/.env` 에 적은 뒤, 토큰이 든 `bots/<봇>/.mcp.json` 을 만든다. 몇 번 돌려도 안전하다(등록된 봇은 "있음"으로 건너뛴다).
+
+**웹의 `+ 봇 등록` 은 누르지 않는다.** 봇 등록은 이 명령이 대신 한다. 웹에서 봇을 만들면 토큰과 명령어가 나오는데, 그 화면에서 가져올 것은 아래 표대로다.
+
+| 길 | 하는 일 | 웹 화면에서 가져올 것 |
+|---|---|---|
+| **자동 (이 절차)** | `node setup.js` 가 API 로 등록 → 토큰을 `.env` 에 → `.mcp.json` 생성 | **없음** |
+| 수동 (웹에서 먼저 만들었을 때) | 웹 `+ 봇 등록` → 나온 **토큰**을 `bots/<봇>/.env` 의 `MINIDISCORD_TOKEN=` 뒤에 붙임 → `node setup.js` | **토큰만**. 함께 나오는 명령어(`.mcp.json` 만들기 + `claude …`)는 무시한다 — `setup.js` 가 같은 파일을 만든다 |
+
+봇 이름은 폴더 이름과 같아야 한다(`analyst` · `archivist` · `orchestrator` · `reporter` · `researcher`). 웹에서 만들 때 `orchestrator` 만 역할을 `orchestrator` 로, 나머지는 `worker` 로 둔다.
 
 **(d) 방 열기, 그리고 터미널 다섯에 봇 하나씩**
 
