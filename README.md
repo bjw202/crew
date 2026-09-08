@@ -324,7 +324,7 @@ cd /Users/나/work/minidiscord && MINIDISCORD_BOT_FILES_DIR="/Users/나/work/roo
 cd /Users/나/work/crew && node setup.js
 ```
 
-서버가 떠 있으니 봇 다섯을 API 로 등록하고 토큰을 `bots/<봇>/.env` 에 적은 뒤, 토큰이 든 `bots/<봇>/.mcp.json` 을 만든다. 웹에서 복사할 일이 없다. 몇 번 돌려도 안전하다(등록된 봇은 "있음"으로 건너뛴다).
+서버가 떠 있으니 봇 다섯을 API 로 등록하고 토큰을 `bots/<봇>/.env` 에 적은 뒤, 토큰이 든 `bots/<봇>/.mcp.json` 을 만든다. 웹에서 복사할 일이 없다. 몇 번 돌려도 안전하다(등록된 봇은 "있음"으로 건너뛴다). 이 `.mcp.json` 은 minidiscord 웹의 `+ 봇 등록` 이 안내하는 것과 같은 파일이다 — 손으로 등록해도 결과가 같다.
 
 **(d) 방 열기, 그리고 터미널 다섯에 봇 하나씩**
 
@@ -362,6 +362,7 @@ cd /Users/나/work/crew/bots/analyst && claude --setting-sources project,local -
 | 봇 칩이 ⚪ 그대로 | 세션은 떴는데 토큰이 틀리거나 `.mcp.json` 이 옛것 | `node setup.js` 다시 돌린 뒤 봇 재시작 |
 | `@TO` 가 "초대되지 않았습니다" | 그 방에 봇 참여를 안 했다 | `node setup.js join <방>` |
 | 봇이 첨부한 파일이 방에 안 뜬다 | `MINIDISCORD_BOT_FILES_DIR` 가 없거나 상대 경로 | (b) 의 명령대로 전체 경로로 서버 재기동 |
+| 세션 시작마다 `minidiscord-channel` 연결 실패 경고 | 전역 설정(`~/.claude.json`)에 같은 이름의 낡은 항목이 남아 있다. 봇에는 영향 없음(`--strict-mcp-config` 가 무시) | `claude mcp remove minidiscord-channel -s user` |
 
 ## 8. 폴더
 
