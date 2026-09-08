@@ -407,8 +407,12 @@ cd /Users/나/work/crew/bots/analyst && claude --setting-sources project,local -
 - 도구 승인은 `settings.template.json` 의 allow 목록(채널 reply·fetch_history, Read, 자기 폴더 쓰기, git 등)으로 미리 열어 둔다. 목록 밖 도구는 방에 승인 요청이 올라오고 사람이 `yes <ID>` 로 답한다.
   allow 는 명령 이름으로 맞춘다. 봇이 `/usr/bin/git …` 처럼 절대 경로로 부르거나 `a && b` 로 이어 붙이면 목록과 맞지 않아 승인이 올라온다 —
   그래서 공통 규칙이 "Bash 한 번에 명령 하나, 이름으로 부른다"고 못박는다. 승인 요청이 한 자릿수를 넘으면 규칙이 아니라 allow 목록을 의심한다.
-- 상태줄은 봇 설정에 직접 들어간다. 봇은 `--setting-sources project,local` 로 뜨므로 `~/.claude/settings.json` 의 `statusLine` 이 적용되지 않는다.
-  `setup.js` 가 `~/.claude/scripts/statusline.sh` 를 찾아 넣고, 없으면 키를 빼 둔다. 다른 스크립트를 쓰려면 `CREW_STATUSLINE=<경로> node setup.js`.
+- 상태줄은 crew 안의 `common/statusline.sh` 다. 봇은 `--setting-sources project,local` 로 뜨므로 `~/.claude/settings.json` 의 `statusLine` 은 적용되지 않는다 —
+  그래서 봇 설정에 상대 경로(`bash ../../common/statusline.sh`)로 박아 둔다. 훅과 같은 방식이라 사람마다 경로가 달라지지 않는다.
+  보이는 것은 `🤖 봇 이름 · 🏠 방 · 모델 · CW 사용률 · 🌿 브랜치` 한 줄이다. 터미널 다섯을 띄워 놓고 어느 것이 누구인지 보려는 것이므로,
+  봇 이름과 방은 stdin 이 아니라 폴더 이름과 `current-room` 파일에서 읽는다 — 입력이 비어도 틀리지 않는다.
+  사람 개인 설정(`~/.claude/scripts/…`)에 기대지 않고 `jq` 가 없어도 돈다. 모델 값을 못 읽으면 그 칸을 비우고
+  받은 입력을 `bots/<봇>/.statusline-debug.json` 에 한 벌 남긴다 — 왜 없는지는 그 파일을 보면 안다.
 - 회차가 닫히면 orchestrator 가 회고를 쓴다 (`rooms/<방>/orchestrator/retro-<회차>.md`). 숫자는 `scripts/retro.js` 가 세고 판단만 봇이 한다.
   턴·토큰·승인 횟수는 봇에게 보이지 않는다 — 사람이 `node scripts/retro-cost.js --since <날짜> --room <방번호>` 로 잰다.
   회고는 작업이 아니다. 번호를 주지 않고 배분하지도 검토하지도 않는다. 방 셋을 마칠 때까지 두고, 계속할지는 그때 사람이 정한다.
@@ -434,4 +438,4 @@ S1 이 새로 드러낸 것:
 
 ## 12. 장치는 셋
 
-지침(이 저장소의 md 파일들) · `open-room` 스킬 · `session-start.js` 훅. 설치용 `setup.js` 와 회고용 `scripts/retro.js`·`scripts/retro-cost.js` 는 봇의 장치가 아니라 도구다 — 앞의 둘은 사람이, `retro.js` 는 orchestrator 가 회차 닫힘에 한 번 돌린다. 그 외 스크립트·색인·훅은 없다.
+지침(이 저장소의 md 파일들) · `open-room` 스킬 · `session-start.js` 훅. 설치용 `setup.js`, 상태줄 `common/statusline.sh`, 회고용 `scripts/retro.js`·`scripts/retro-cost.js` 는 봇의 장치가 아니라 도구다 — 앞의 둘은 사람이, `retro.js` 는 orchestrator 가 회차 닫힘에 한 번 돌린다. 그 외 스크립트·색인·훅은 없다.
