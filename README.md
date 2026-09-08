@@ -283,19 +283,29 @@ flowchart LR
 
 순서는 셋이다.
 
-**1) minidiscord 서버를 crew 조건으로 켠다** (minidiscord 폴더에서, 터미널 하나를 차지한다)
+**1) minidiscord 서버를 crew 조건으로 켠다**
+
+- **어디서**: `루트/minidiscord/` 폴더 안에서 (crew 폴더가 아니다). 터미널 하나를 차지하고 계속 떠 있는다.
+- **경로**: `MINIDISCORD_BOT_FILES_DIR` 에는 `rooms` 폴더의 **전체 경로**를 쓴다. 서버는 crew 가 어디 있는지 모르므로 상대 경로나 "루트/…" 같은 줄임말은 안 된다.
 
 ```
-MINIDISCORD_BOT_FILES_DIR="루트/rooms" MINIDISCORD_BOT_RUN_LIMIT=0 npm start
+cd /Users/나/work/minidiscord          # ← 루트가 /Users/나/work 일 때
+MINIDISCORD_BOT_FILES_DIR="/Users/나/work/rooms" MINIDISCORD_BOT_RUN_LIMIT=0 npm start
 ```
+
+정확한 전체 경로가 들어간 이 명령은 아래 2) 의 `node setup.js` 가 마지막에 찍어 준다 — 그걸 복사해 쓰면 된다 (`rooms/` 폴더도 그때 만들어진다).
 
 - `MINIDISCORD_BOT_FILES_DIR` — 봇이 방에 파일을 첨부할 수 있는 범위. 없으면 봇 첨부가 전부 버려진다.
 - `MINIDISCORD_BOT_RUN_LIMIT=0` — "사람 글 없이 봇 글 6개면 멈춤" 규칙 해제. 안 끄면 배분 몇 번 뒤 worker 가 조용히 멈춘다.
 
+처음 설치라면 순서를 2) → 1) → 2) 로 해도 된다: `node setup.js` 를 한 번 돌려 서버 명령을 받고, 서버를 켠 뒤, 다시 `node setup.js` 를 돌리면 봇 등록까지 된다.
+
 **2) crew 폴더에서 설치 명령 하나**
 
+- **어디서**: `루트/crew/` 폴더 안에서.
+
 ```
-cd 루트/crew && node setup.js
+cd /Users/나/work/crew && node setup.js
 ```
 
 이 한 번이 다음을 다 한다. 몇 번 돌려도 안전하다(있는 것은 건너뛴다).
@@ -309,7 +319,7 @@ cd 루트/crew && node setup.js
 서버가 아직 안 떠 있으면 등록만 건너뛰고 나머지를 한다. 서버를 켜고 다시 돌리면 등록한다.
 생성 파일(`settings.json` · `.env` · `.mcp.json`)은 절대 경로와 토큰이 들어 있어 git 에 넣지 않는다 — 이 저장소에 없는 게 정상이다.
 
-**3) 방을 열고 봇을 띄운다**
+**3) 방을 열고 봇을 띄운다** (역시 `루트/crew/` 안에서)
 
 ```
 node setup.js join 수율개선-2026q3     # 방을 만들고(있으면 그대로) 봇 다섯을 참여시킨다

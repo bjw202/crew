@@ -95,8 +95,10 @@ async function install() {
     log(`씀  bots/${bot}/  settings.json${token ? ' · .mcp.json' : '  (.mcp.json 은 토큰이 없어 건너뜀)'}`);
   }
 
-  console.log('\n④ 다음');
-  if (!up) log(`minidiscord 폴더에서:  MINIDISCORD_BOT_FILES_DIR="${ROOMS}" MINIDISCORD_BOT_RUN_LIMIT=0 npm start   그리고  node setup.js 다시`);
+  console.log('\n④ 서버 명령 (minidiscord 폴더 안에서 — rooms 전체 경로가 들어 있다)');
+  log(`cd ${JSON.stringify(MINIDISCORD)} && MINIDISCORD_BOT_FILES_DIR=${JSON.stringify(ROOMS)} MINIDISCORD_BOT_RUN_LIMIT=0 npm start`);
+  console.log('\n⑤ 다음');
+  if (!up) log('서버가 안 떠 있다 — 위 ④ 로 서버를 켜고 node setup.js 를 다시 돌리면 봇을 등록한다');
   else if (noToken.length) log(`토큰 없는 봇: ${noToken.join(', ')} — 위 ② 의 주의를 처리한 뒤 node setup.js 다시`);
   else log('node setup.js join <방이름>   → 방 만들고 봇 다섯 참여\n  node setup.js start all       → 봇 다섯 띄우기');
 }
