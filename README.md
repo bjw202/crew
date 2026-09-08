@@ -416,6 +416,9 @@ cd /Users/나/work/crew/bots/analyst && claude --setting-sources project,local -
   스크립트가 스스로 PATH 를 채우고 봇 이름과 방은 외부 명령 없이 bash 문법만으로 구한다.
   사람 개인 설정(`~/.claude/scripts/…`)에 기대지 않고 `jq` 가 없어도 돈다. 모델 값을 못 읽으면 그 칸을 비우고
   받은 입력을 `bots/<봇>/.statusline-debug.json` 에 한 벌 남긴다 — 왜 없는지는 그 파일을 보면 안다.
+- crew 가 달라진 기록은 `EVOLUTION.md` 다. 세대(과제 한 판)마다 절이 하나 늘고, 모양은 관찰 → 진단 → 변경 → 예측 → 검증으로 고정한다.
+  숫자는 `metrics/runs.jsonl` 에 `scripts/retro-cost.js --record --label <세대>` 가 붙인다. 손으로 고치지 않는다.
+  규칙을 고쳤으면 커밋 글에 무엇을 보고 고쳤는지 적는다 — git 은 무엇을, EVOLUTION.md 는 왜와 효과를, metrics 는 숫자를 맡는다.
 - 회차가 닫히면 orchestrator 가 회고를 쓴다 (`rooms/<방>/orchestrator/retro-<회차>.md`). 숫자는 `scripts/retro.js` 가 세고 판단만 봇이 한다.
   턴·토큰·승인 횟수는 봇에게 보이지 않는다 — 사람이 `node scripts/retro-cost.js --since <날짜> --room <방번호>` 로 잰다.
   회고는 작업이 아니다. 번호를 주지 않고 배분하지도 검토하지도 않는다. 방 셋을 마칠 때까지 두고, 계속할지는 그때 사람이 정한다.
