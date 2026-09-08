@@ -269,59 +269,97 @@ flowchart LR
 
 ---
 
-## 7. 설치 — 어디에든 clone 하고 한 번 실행
+## 7. 설치 — clone 하고 명령 하나
 
-```
-git clone <이 저장소> crew
-cd crew && node setup.js
-```
-
-`setup.js` 가 crew **옆에** `rooms/` 와 `knowledge/`(git) 를 만들고, 봇마다 `.claude/settings.json`(허용·거부 규칙 + 훅 + 자동 압축 70만 토큰)과 `.env` 틀을 쓰고, `.env` 에 토큰이 있으면 `.mcp.json`(미니디스코드 채널 플러그인 등록)까지 쓴다.
-설치 위치를 옮기면 `node setup.js` 를 다시 돌린다. settings.json · .env · .mcp.json 은 git 에 들어가지 않는다.
-
-미니디스코드는 crew 의 형제 폴더 `루트/minidiscord` 에 있다고 본다(다른 곳이면 `MINIDISCORD_DIR=<경로> node setup.js`). 그 안에서 `npm run build -w channel` 을 한 번 해 두어야 `channel/dist/index.js` 가 생긴다.
-
-봇 토큰은 미니디스코드 웹 화면 `+ 봇 등록` 에서 봇마다 받는다(orchestrator 는 role `orchestrator`, 나머지는 `worker`). 토큰은 그때 **한 번만** 보이니 바로 `bots/<봇>/.env` 의 `MINIDISCORD_TOKEN=` 뒤에 붙이고 `node setup.js` 를 다시 돌린다. 방을 만들면 방 머리의 `봇 참여` 로 봇 다섯을 넣는다.
+준비물은 셋이다: Node, Claude Code(`claude`), 그리고 형제 폴더에 받아 둔 minidiscord.
 
 ```
 루트/
-  crew/                  이 저장소. 봇이 여기서 뜬다: cwd = crew/bots/<봇>/
-    common/              공통 지침 · 훅 · settings 틀
-    bots/<봇>/           CLAUDE.md · memory.md · current-room · .claude/settings.json(생성) · .env(토큰) · .mcp.json(생성)
-    proposals/           개선 제안
-    setup.js
-  rooms/<과제>/          작업장. 과제마다 git. orchestrator 가 open-room 으로 만든다
-    orchestrator/        state.md · decisions.md · chronicle.md
-    <worker>/            handoff.md · task-N-notes.md · task-N-<slug>.md · task-N-report.md
-    archivist/           inbox/ · index.md · wiki/ · 00-prior-knowledge.md
-  knowledge/             회사 지식. index.md · domain/ · projects/. git 하나
+  minidiscord/     ← 먼저 받아 둔다:  git clone <minidiscord> && cd minidiscord && npm install && npm run build -w channel
+  crew/            ← 이 저장소:        git clone <crew>
+  rooms/           ← setup.js 가 만든다
+  knowledge/       ← setup.js 가 만든다
 ```
 
-## 8. 봇 기동 (방마다 새로 띄우지 않는다 — 상주)
+순서는 셋이다.
 
-먼저 미니디스코드 서버를 crew 용 조건으로 띄운다(minidiscord 폴더에서):
+**1) minidiscord 서버를 crew 조건으로 켠다** (minidiscord 폴더에서, 터미널 하나를 차지한다)
 
 ```
 MINIDISCORD_BOT_FILES_DIR="루트/rooms" MINIDISCORD_BOT_RUN_LIMIT=0 npm start
 ```
 
-`MINIDISCORD_BOT_FILES_DIR` 가 없으면 봇이 보내는 첨부가 전부 버려지고, `MINIDISCORD_BOT_RUN_LIMIT`(기본 6)을 끄지 않으면 사람 글 없이 봇 글이 여섯 번 이어질 때 `@TO` 가 `cc` 로 내려가 배분이 멈춘다.
+- `MINIDISCORD_BOT_FILES_DIR` — 봇이 방에 파일을 첨부할 수 있는 범위. 없으면 봇 첨부가 전부 버려진다.
+- `MINIDISCORD_BOT_RUN_LIMIT=0` — "사람 글 없이 봇 글 6개면 멈춤" 규칙 해제. 안 끄면 배분 몇 번 뒤 worker 가 조용히 멈춘다.
 
-그다음 `setup.js` 가 봇마다 한 줄씩 찍어 주는 명령을 터미널 다섯에 하나씩:
+**2) crew 폴더에서 설치 명령 하나**
 
 ```
-cd 루트/crew/bots/analyst && claude --setting-sources project,local --strict-mcp-config --mcp-config .mcp.json --dangerously-load-development-channels server:minidiscord-channel
+cd 루트/crew && node setup.js
 ```
 
-`--dangerously-load-development-channels server:…` 가 있어야 채팅이 세션으로 **밀려 들어온다**(없으면 도구만 있는 보통 MCP 서버다). 첫 기동 때 "이 폴더를 신뢰하는가" 와 "개발 채널 경고" 두 번은 사람이 확인한다. 시작 화면에 `Channels (experimental) messages from server:minidiscord-channel inject directly in this session` 이 보이고 미니디스코드 방 머리의 칩이 🟢 이면 붙은 것이다.
+이 한 번이 다음을 다 한다. 몇 번 돌려도 안전하다(있는 것은 건너뛴다).
 
-지침을 고쳤으면 재시작해야 적용된다.
+| 하는 일 | 결과 |
+|---|---|
+| `rooms/` `knowledge/` 만들기 | crew 옆에 폴더 둘 (knowledge 는 git) |
+| 봇 다섯을 minidiscord 에 등록 | 서버가 떠 있으면 API 로 등록하고 토큰을 `bots/<봇>/.env` 에 적는다. 웹에서 복사할 일이 없다 |
+| 봇마다 설정 생성 | `bots/<봇>/.claude/settings.json`(허용·거부 규칙, 훅, 자동 압축) · `bots/<봇>/.mcp.json`(채널 플러그인 + 토큰) |
+
+서버가 아직 안 떠 있으면 등록만 건너뛰고 나머지를 한다. 서버를 켜고 다시 돌리면 등록한다.
+생성 파일(`settings.json` · `.env` · `.mcp.json`)은 절대 경로와 토큰이 들어 있어 git 에 넣지 않는다 — 이 저장소에 없는 게 정상이다.
+
+**3) 방을 열고 봇을 띄운다**
+
+```
+node setup.js join 수율개선-2026q3     # 방을 만들고(있으면 그대로) 봇 다섯을 참여시킨다
+node setup.js start all                # 봇 다섯을 tmux 창 하나씩에 띄운다
+tmux attach -t crew                    # 창마다 첫 기동 확인 두 번을 눌러 준다 (아래)
+```
+
+첫 기동 때 Claude Code 가 창마다 두 번 묻는다. 이건 Claude Code 의 안전장치라 건너뛸 수 없다.
+
+1. "이 폴더를 신뢰하는가" → `Yes, I trust this folder` (폴더마다 한 번만 묻는다)
+2. "개발 채널을 여는가" → `I am using this for local development` (기동할 때마다 묻는다)
+
+시작 화면에 `Channels (experimental) messages from server:minidiscord-channel inject directly in this session` 이 보이고, 웹의 방 머리에서 봇 칩이 🟢 이면 붙은 것이다. 이제 웹에서 `@TO(orchestrator) 과제 시작: <목표 한 줄>` 에 파일을 붙여 보낸다.
+
+tmux 가 없으면 `start all` 이 명령 다섯 줄을 찍어 주니 터미널 다섯에 하나씩 붙여 넣는다. 봇 하나만 띄우려면 `node setup.js start analyst`.
+
+### 자주 막히는 곳
+
+| 증상 | 이유 | 하는 일 |
+|---|---|---|
+| `setup.js` 가 "서버 없음" | minidiscord 가 안 떠 있거나 주소가 다르다 | 1) 을 먼저. 주소가 다르면 `MINIDISCORD_URL=http://호스트:포트 node setup.js` |
+| "…은 서버에 있는데 .env 에 토큰이 없다" | 예전에 등록한 봇의 토큰을 잃었다 | 웹 사이드바에서 그 봇을 삭제하고 `node setup.js` 다시 (토큰은 등록 때 한 번만 나온다) |
+| `channel/dist/index.js` 없음 | minidiscord 채널 플러그인을 안 빌드했다 | minidiscord 폴더에서 `npm run build -w channel`. 다른 위치면 `MINIDISCORD_DIR=<경로> node setup.js` |
+| 봇 칩이 ⚪ 그대로 | 세션은 떴는데 토큰이 틀리거나 `.mcp.json` 이 옛것 | `node setup.js` 다시 돌린 뒤 봇 재시작 |
+| `@TO` 가 "초대되지 않았습니다" | 그 방에 봇 참여를 안 했다 | `node setup.js join <방>` |
+
+## 8. 폴더
+
+```
+루트/
+  crew/                  이 저장소. 봇이 여기서 뜬다: cwd = crew/bots/<봇>/
+    common/              공통 지침 · 훅 · settings 틀
+    bots/<봇>/           CLAUDE.md · memory.md · current-room · .claude/settings.json(생성) · .env(토큰, 생성) · .mcp.json(생성)
+    proposals/           개선 제안
+    setup.js             설치 · join · start (사람이 돌린다)
+  rooms/<과제>/          작업장. 과제마다 git. orchestrator 가 open-room 으로 만든다
+    orchestrator/        state.md · decisions.md · chronicle.md
+    <worker>/            handoff.md · task-N-notes.md · task-N-<slug>.md · task-N-report.md
+    archivist/           inbox/ · index.md · wiki/ · 00-prior-knowledge.md
+  knowledge/             회사 지식. index.md · domain/ · projects/. git 하나
+  minidiscord/           채팅 서버 + 채널 플러그인 (별도 저장소)
+```
+
+봇은 상주한다 — 방마다 새로 띄우지 않는다. 지침·스킬·훅을 고쳤으면 그 봇만 재시작한다(`tmux` 창에서 `/exit` 뒤 `node setup.js start <봇>`).
 
 ## 9. 봇 추가 — 셋이면 끝
 
 1. `bots/<이름>/CLAUDE.md` 를 만들고 (첫 줄 `@../../common/CLAUDE-common.md`, worker면 `@../../common/CLAUDE-worker.md` 도), `common/CLAUDE-common.md` 의 팀 표에 한 줄을 더한다.
-2. 미니디스코드에 봇을 등록해 토큰을 받고 `bots/<이름>/.env` 에 넣는다.
-3. `node setup.js` 를 다시 돌린다 — 다른 봇들의 거부 규칙에 새 이름이 자동으로 들어간다.
+2. `node setup.js` 를 다시 돌린다 — 새 봇이 minidiscord 에 등록되고, 다른 봇들의 거부 규칙에 새 이름이 자동으로 들어간다.
+3. `node setup.js join <방>` 으로 열린 방에 넣고 `node setup.js start <이름>` 으로 띄운다.
 
 ## 10. 운영 습관
 
