@@ -11,8 +11,9 @@ const path = require('path');
 const { execSync } = require('child_process');
 
 const CREW = path.resolve(__dirname);
-// 상태줄은 crew 안의 common/statusline.sh 다 (템플릿에 상대 경로로 박혀 있다 — 훅과 같은 방식).
-// 봇은 --setting-sources project,local 로 뜨므로 ~/.claude/settings.json 의 statusLine 은 적용되지 않는다.
+// 상태줄은 crew 안의 common/statusline.sh 다. 봇은 --setting-sources project,local 로 뜨므로
+// ~/.claude/settings.json 의 statusLine 은 적용되지 않아 봇 설정에 직접 적어 준다.
+// 훅과 달리 statusLine 은 상대 경로를 주면 Claude Code 가 아예 부르지 않는다(실측) — 절대 경로로 넣는다.
 const ROOT = path.dirname(CREW);
 const ROOMS = path.join(ROOT, 'rooms');
 const KNOWLEDGE = path.join(ROOT, 'knowledge');
@@ -85,7 +86,8 @@ async function install() {
       .replace('"{{DENY_OTHERS}}"', others.map(s => JSON.stringify(s)).join(', '))
       .replace('"{{DENY_KNOWLEDGE}}"', JSON.stringify(knowledgeDeny))
       .replace(/\{\{CREW\}\}/g, pat(CREW)).replace(/\{\{ROOMS\}\}/g, pat(ROOMS)).replace(/\{\{KNOWLEDGE\}\}/g, pat(KNOWLEDGE)).replace(/\{\{BOT\}\}/g, bot)
-      .replace('{{ROOMS_DIR}}', ROOMS.replace(/\\/g, '\\\\')).replace('{{KNOWLEDGE_DIR}}', KNOWLEDGE.replace(/\\/g, '\\\\')).replace('{{PROPOSALS_DIR}}', path.join(CREW, 'proposals').replace(/\\/g, '\\\\')));
+      .replace('{{ROOMS_DIR}}', ROOMS.replace(/\\/g, '\\\\')).replace('{{KNOWLEDGE_DIR}}', KNOWLEDGE.replace(/\\/g, '\\\\')).replace('{{PROPOSALS_DIR}}', path.join(CREW, 'proposals').replace(/\\/g, '\\\\'))
+      .replace('{{STATUSLINE}}', path.join(CREW, 'common', 'statusline.sh').replace(/\\/g, '\\\\')));
     const dir = path.join(CREW, 'bots', bot, '.claude'); fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, 'settings.json'), JSON.stringify(json, null, 2) + '\n');
     if (!fs.existsSync(envFile(bot))) writeEnv(envFile(bot), { MINIDISCORD_TOKEN: '' });

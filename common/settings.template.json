@@ -46,7 +46,7 @@
     "additionalDirectories": ["{{ROOMS_DIR}}", "{{KNOWLEDGE_DIR}}", "{{PROPOSALS_DIR}}"]
   },
   "env": { "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1" },
-  "statusLine": { "type": "command", "command": "bash ../../common/statusline.sh" },
+  "statusLine": { "type": "command", "command": "{{STATUSLINE}}" },
   "autoCompactEnabled": true,
   "autoCompactWindow": 650000,
   "hooks": {

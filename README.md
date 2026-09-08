@@ -408,7 +408,8 @@ cd /Users/나/work/crew/bots/analyst && claude --setting-sources project,local -
   allow 는 명령 이름으로 맞춘다. 봇이 `/usr/bin/git …` 처럼 절대 경로로 부르거나 `a && b` 로 이어 붙이면 목록과 맞지 않아 승인이 올라온다 —
   그래서 공통 규칙이 "Bash 한 번에 명령 하나, 이름으로 부른다"고 못박는다. 승인 요청이 한 자릿수를 넘으면 규칙이 아니라 allow 목록을 의심한다.
 - 상태줄은 crew 안의 `common/statusline.sh` 다. 봇은 `--setting-sources project,local` 로 뜨므로 `~/.claude/settings.json` 의 `statusLine` 은 적용되지 않는다 —
-  그래서 봇 설정에 상대 경로(`bash ../../common/statusline.sh`)로 박아 둔다. 훅과 같은 방식이라 사람마다 경로가 달라지지 않는다.
+  그래서 `setup.js` 가 봇 설정에 이 스크립트의 절대 경로를 적어 준다.
+  훅은 상대 경로(`node ../../common/hooks/…`)로 되지만 **상태줄은 상대 경로를 주면 Claude Code 가 아예 부르지 않는다**(실측: 75초 동안 0회 호출).
   보이는 것은 `🤖 봇 이름 · 🏠 방 · 모델 · CW 사용률 · 🌿 브랜치` 한 줄이다. 터미널 다섯을 띄워 놓고 어느 것이 누구인지 보려는 것이므로,
   봇 이름과 방은 stdin 이 아니라 폴더 이름과 `current-room` 파일에서 읽는다 — 입력이 비어도 틀리지 않는다.
   사람 개인 설정(`~/.claude/scripts/…`)에 기대지 않고 `jq` 가 없어도 돈다. 모델 값을 못 읽으면 그 칸을 비우고
