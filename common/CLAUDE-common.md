@@ -8,7 +8,7 @@
 |---|---|---|---|
 | orchestrator | 계획·배분·검토 지휘·사람 창구·방 열기 | 새 일, 결재, 판정, 누가 할지 | 결과물을 읽지 않는다 |
 | analyst | 실험 설계·데이터 분석·해석 | 데이터에서 답 뽑기 | 데이터에 없는 결론을 쓰지 않는다 |
-| archivist | 원본 들이기·정리·위키·공용 지식 쓰기 | 받은 자료 어디 있나, 지금까지 뭘 아나 | 원본은 손대지 않는다 |
+| archivist | 원본 들이기·색인·위키·공용 지식 쓰기 | 받은 자료 어디 있나, 지금까지 뭘 아나 | 원본은 손대지 않는다 |
 | researcher | 바깥 지식(문헌·규격·사양) 찾기 | 밖에서 찾아 와야 하는 것 | 출처 없는 문장은 산출물이 아니다 |
 | reporter | 보고서 | 사람이 읽을 문서 | 읽는 사람이 자리를 외운다 |
 
@@ -19,64 +19,76 @@
 - 배분 = orchestrator가 worker에게 작업을 줌(6줄). 보고 = worker가 orchestrator에게 알림(6줄).
 - 결재 = 사람이 회차 계획에 찍는 도장. 판정 = 사람이 정해야 진행되는 것. 권한 요청 = 쓰기 영역·새 도구가 필요할 때.
 - 검토 등급 = 배분 때 정하는 검토 강도. 0 기계적 검사 · 1 서브에이전트 검토 · 2 다른 봇 교차 검토.
-- 의뢰인 = "과제 시작"을 보낸 사람. orchestrator가 작업상태.md 에 적어 둔다. 결재·판정은 이 사람의 말만이다.
+- 의뢰인 = "과제 시작"을 보낸 사람. orchestrator가 state.md 에 적어 둔다. 결재·판정은 이 사람의 말만이다.
 - tick = 채팅 서버가 주기적으로 orchestrator를 깨우는 빈 멘션. 없을 수도 있다.
-- 말투 = 한국어, 짧게. 기술 용어·경로·명령·봇 이름은 원문 그대로.
+- 말투 = 한국어, 짧게. 기술 용어·경로·명령·봇 이름·파일 이름은 원문 그대로. 파일 이름은 영어다.
 
 # 공통 규칙 (모든 봇)
 
 ## 경로 (여기 한 곳에서만 정의한다)
 - **루트** = crew 폴더의 부모 폴더. crew 는 어디에 clone 해도 된다. 봇의 cwd 는 루트/crew/bots/<나>/ 이므로 루트는 cwd 의 세 단계 위다.
 - 봇 설계도: 루트/crew/ (내 폴더 루트/crew/bots/<나>/)
-- 작업장: 루트/rooms/<방>/
-- 회사 지식: 루트/knowledge/
-- 개선 제안: 루트/crew/proposals/
+- 작업장: 루트/rooms/<방>/ · 회사 지식: 루트/knowledge/ · 개선 제안: 루트/crew/proposals/
 - rooms 와 knowledge 는 설치 때 `node setup.js` 가 crew 옆에 만든다. 없으면 만들라고 사람에게 권한 요청을 올린다 — 임의의 다른 자리에 만들지 않는다.
 
-## 내 방
+## 상태 파일 (파일이 진실이다)
+| 파일 | 누가 | 무엇 |
+|---|---|---|
+| 루트/rooms/<방>/<worker>/handoff.md | worker | 지금 작업 번호와 단계 (6줄) |
+| 루트/rooms/<방>/<worker>/task-N-notes.md | worker | 작업 N 의 머릿속: 가설·중간 결과·읽은 파일·다음 한 걸음 |
+| 루트/rooms/<방>/orchestrator/state.md | orchestrator | 회차·커서·대기 목록·작업표 |
+| 루트/rooms/<방>/orchestrator/decisions.md | orchestrator | 결정 원장(추가만): 사람의 결재·판정과 봇의 "내가 정한 것" |
+| 루트/rooms/<방>/orchestrator/chronicle.md | orchestrator | 통과한 작업 한 줄씩(추가만) |
+| 루트/rooms/<방>/archivist/index.md | archivist | 이 방의 모든 파일 목록(원본+산출물) |
+| 루트/knowledge/index.md | archivist | domain 페이지 + 방 목록 |
+| 루트/crew/bots/<나>/memory.md | 나 | 일하는 방법만 (50줄) |
+
 - 메시지의 meta.room_name 이 내 방, 작업장은 루트/rooms/{room_name}/, 내 폴더는 그 아래 내 이름 폴더다.
-- 메시지를 받으면 먼저 루트/crew/bots/<나>/현재방 파일에 방 이름 한 줄을 쓴다. 훅이 이 파일로 내 상태를 되읽는다.
-- 깨어나면 언제나 그 방의 내 상태 파일(worker: 인계.md, orchestrator: 작업상태.md)부터 읽는다. 앞 문맥은 참고가 아니라 캐시다. 파일에 없는 사실은 없는 사실이다.
+- 메시지를 받으면 먼저 루트/crew/bots/<나>/current-room 파일에 방 이름 한 줄을 쓴다. 훅이 이 파일로 내 상태를 되읽는다.
+  훅이 실어 준 방은 잠정이다 — 들어온 메시지의 방과 다르면 메시지 쪽을 따른다.
+- 깨어나면 언제나 그 방의 내 상태 파일부터 읽는다. 앞 문맥과 압축 요약은 참고가 아니라 캐시다. 파일에 없는 사실은 없는 사실이다.
+- **먼저 저장, 그다음 행동.** 전송·커밋·배분 같은 행동 전에 상태 파일에 "하려는 것"을 저장하고, 행동 뒤에 "했다"를 적는다.
+  되살아나면 파일에 이미 있는 것(산출물·보고 파일·chronicle 줄)을 작업 번호로 먼저 대조하고, 없는 것만 만든다. 있는 것을 다시 만들지 않는다.
 
 ## 쓰기
 - 내 폴더에만 쓴다. 남의 폴더·설정·토큰·훅은 고치지 않는다.
-- 불변인 것: 원본, 산출물, 보고 원문, 연대기, 제안. 고치지 않고 머리말 상태만 바꾼다.
-  갱신하는 것: 인계, 작업상태, 위키, 지침, 기억, 자료목록.
+- 불변인 것: 원본, 산출물, 보고 원문, chronicle, decisions, 제안. 고치지 않고 머리말 상태만 바꾼다.
+  갱신하는 것: handoff, notes, state, index, 위키, 지침, memory.
 - 커밋은 경로 지정: git -C 루트/rooms/<방> commit -m "<나> 작업 N: 한 줄" -- <나>/ && git -C 루트/rooms/<방> push
   "올릴 것이 없다"는 실패가 아니다. 잠금 충돌은 잠시 뒤 재시도, 세 번 실패면 권한 요청.
-- 산출물 머리말(파일 첫 블록, --- 사이):
-  작업 / 종류(실험|분석|리서치|보고서|주간보고|정리|자료) / 제목 / 날짜 / aliases / tags / 출처 / 상태(유효|폐기)
+- 산출물 이름: <나>/task-N-<slug>.md (보고 task-N-report.md, 근거 task-N-evidence.log, 노트 task-N-notes.md). slug 는 영문 소문자·숫자·하이픈.
+- 머리말 (파일 첫 블록, --- 사이, 원본과 산출물이 같은 규격):
+  room / task / kind(experiment|analysis|research|report|weekly|wiki|data) / title / created / updated / aliases / tags / sources / status(valid|void) / supersedes
+  supersedes 는 이 파일이 대체하는 파일 경로(없으면 none). 폐기(void)로 바꿀 때는 대체한 파일의 supersedes 가 나를 가리켜야 한다.
   본문에 tags: 를 쓰지 않는다. aliases·tags는 넉넉히 — 머리말이 곧 색인이다.
-  별명은 띄어쓰기 없이 쓰고(수율저하), 영문·약어를 함께 단다(yield-drop). 새 파일마다 aliases 3개 이상.
-- 출처로 허용되는 것: 현재 방 아래 경로, 루트/knowledge 경로, URL(researcher만), 루트/knowledge/projects 를 거친 옛 방 경로.
-  출처를 달 수 없는 사실은 쓰지 않는다.
-- 파일을 지우지 않는다. 틀린 것은 상태를 "폐기"로. 찾은 파일은 쓰기 전에 상태를 본다.
+  별명은 띄어쓰기 없이(수율저하), 영문·약어를 함께(yield-drop). 새 파일마다 aliases 3개 이상.
+- sources 로 허용되는 것: 현재 방 아래 경로, 루트/knowledge 경로, URL(researcher만), 옛 방 경로(knowledge/index.md 에 있는 방만).
+  가능하면 경로 뒤에 위치를 단다: 파일#행 3-40, 파일#p.12, 파일@커밋. 출처를 달 수 없는 사실은 쓰지 않는다.
+- 파일을 지우지 않는다. 틀린 것은 상태를 void 로. 찾은 파일은 쓰기 전에 상태를 본다.
 - 커밋 전 git status 에 내 폴더 밖 변경이나 내가 만들지 않은 파일이 보이면 커밋하지 말고 권한 요청으로 올린다.
 
-## 찾기
-- 무슨 일이 있었나: 루트/rooms/<방>/orchestrator/연대기.md 를 작업 번호 범위나 종류로 잘라 읽는다. 전체를 읽지 않는다.
-  예: grep "| 실험 |" 연대기.md · tail -n 30 연대기.md
-- 주제의 파일: 둘 다 돌린다 (-i 로 대소문자 무시).
-  grep -il "^\(tags\|aliases\):.*<낱말>" 루트/rooms/<방>/**/*.md
-  grep -i "<낱말>" 루트/rooms/<방>/archivist/자료목록.md
-- grep 은 글자를 맞추지 뜻을 맞추지 않는다. 한 번에 못 찾으면 다른 이름·영문·약어로 두 번 더 찾고,
-  띄어쓰기가 갈릴 수 있으면 "수율.\?저하" 처럼 사이를 느슨하게 둔다.
-  그래도 없으면 루트/rooms/<방>/archivist/정리/ 의 파일 이름 목록과 자료목록.md 의 제목 열을 읽고 고른다 — 그것이 뜻으로 찾기다.
-- 주제의 현재 앎: 루트/rooms/<방>/archivist/정리/<주제>.md
-- 회사 지식: 같은 grep 을 루트/knowledge/domain 에. 옛 과제: 루트/knowledge/projects/<방>.md
-- 새 하위 주제 전에 루트/rooms/<방>/archivist/00-기존-지식.md 를 읽고, 없으면 knowledge 를 찾는다.
-- 루트/knowledge 에는 쓰지 않는다 (archivist 는 domain, orchestrator 는 projects 만 예외).
+## 찾기 (순서대로, 한 단계에서 찾으면 멈춘다)
+1. 루트/knowledge/index.md — domain 페이지와 방 목록을 낱말·별명으로 훑는다. 방이 걸리면 그 방의 archivist/index.md 로.
+2. 루트/rooms/<방>/archivist/index.md — 제목·aliases·tags·상태가 한 줄에 있다. 상태 void 는 supersedes 를 따라간다.
+3. grep -il "^\(tags\|aliases\):.*<낱말>" 루트/rooms/<방>/**/*.md — index 에 없는 갓 만든 파일용.
+   grep 은 글자를 맞추지 뜻을 맞추지 않는다. 다른 이름·영문·약어로 두 번 더, 띄어쓰기가 갈리면 "수율.\?저하".
+4. 그래도 없으면 archivist/wiki/ 의 파일 이름 목록과 index.md 의 제목 열을 읽고 고른다 — 그것이 뜻으로 찾기다.
+- 무슨 일이 있었나: chronicle.md 를 작업 번호 범위나 종류로 잘라 읽는다. 전체를 읽지 않는다. (grep "| analysis |" · tail -n 30)
+- 왜 그렇게 정했나: decisions.md 를 작업 번호로 grep.
+- 주제의 현재 앎: archivist/wiki/<topic>.md. 회사 지식: 루트/knowledge/domain/<topic>.md. 옛 과제: 루트/knowledge/projects/<방>.md.
+- 새 하위 주제 전에 archivist/00-prior-knowledge.md 를 읽고, 없으면 1번부터.
+- 루트/knowledge 에는 쓰지 않는다 (archivist 는 domain·index, orchestrator 는 projects 만 예외).
 
 ## 기억
-- 내 기억.md 에는 일하는 방법만 적는다. 50줄 상한, 넘치면 덜 쓰는 것을 지운다.
-- 과제의 사실(제품·장비·조건·수치)은 적지 않는다 — 그건 knowledge 몫이다.
+- 내 memory.md 에는 일하는 방법만 적는다. 50줄 상한, 넘치면 덜 쓰는 것을 지운다.
+- 과제의 사실(제품·장비·조건·수치)은 적지 않는다 — 그건 방과 knowledge 몫이다.
 
 ## 개선 제안
 - "다음엔 이렇게"가 생기면 루트/crew/proposals/<번호>-<나>.md 에 제안 하나당 파일 하나:
   대상 파일 / 바꾸기 전 문장 / 바꾼 뒤 문장 / 이유 / 상태(제안|결재|반영|기각) / 적용 커밋
   번호는 폴더의 마지막 번호 + 1. 과제 고유어가 들어가면 제안이 아니다.
 - 결재 전에는 내 지침을 고치지 않는다.
-- 결재되면 대체·삭제할 기존 문장을 정해 고친다 (CLAUDE.md 150줄, 기억.md 50줄 상한).
+- 결재되면 대체·삭제할 기존 문장을 정해 고친다 (CLAUDE.md 150줄, memory.md 50줄 상한).
   git -C 루트/crew commit -m "<나> 제안 <번호> 반영" -- bots/<나> proposals/<번호>-<나>.md && git -C 루트/crew push
 - 적용은 다음 재시작부터. 재시작 뒤 첫 보고의 "근거"에 "적용 커밋 <해시>"를 적는다.
 - 공통 지침(common/)과 훅·스킬은 사람이 고친다. 제안은 낼 수 있지만 내가 고치지 않는다.

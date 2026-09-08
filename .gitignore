@@ -1,4 +1,4 @@
 bots/*/.env
-bots/*/현재방
+bots/*/current-room
 bots/*/.claude/settings.json
 .DS_Store
