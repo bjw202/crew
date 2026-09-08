@@ -279,7 +279,7 @@ flowchart LR
 |---|---|---|---|---|---|
 | ① | **minidiscord 서버** (채팅 서버 + 봇 게이트웨이) | `/Users/나/work/minidiscord` | `npm run dev -w server` | `MINIDISCORD_BOT_FILES_DIR`, `MINIDISCORD_BOT_RUN_LIMIT` — 둘 다 **서버**가 읽는다 | 예 — 터미널 하나 상주 |
 | ② | **설치·등록 도구** (`setup.js`) | `/Users/나/work/crew` | `node setup.js` · `node setup.js join <방>` | 없음 (minidiscord 가 형제 폴더가 아닐 때만 `MINIDISCORD_DIR`) | 아니오 — 끝나면 종료 |
-| ③ | **봇 세션 다섯** (Claude Code) | `/Users/나/work/crew/bots/<봇>` 각각 | `node setup.js start all` 이 띄운다 | 없음 — 토큰은 `bots/<봇>/.mcp.json` 안에 있다 | 예 — tmux 창 다섯 상주 |
+| ③ | **봇 세션 다섯** (Claude Code) | `/Users/나/work/crew/bots/<봇>` 각각 | `node setup.js start all` 이 띄운다 | 없음 — 토큰은 `bots/<봇>/.mcp.json` 안에 있다 | 예 — 터미널 창 다섯 상주 |
 
 ①과 ③은 서로 다른 프로세스다. ①은 방과 메시지를 들고 있는 서버이고, ③은 그 서버에 봇으로 붙는 Claude Code 다섯이다. ②는 그 둘을 이어 주는 일회성 도구다.
 
@@ -293,7 +293,7 @@ flowchart LR
   knowledge/       ② 가 만든다
 ```
 
-Node 와 Claude Code(`claude`) 가 있어야 한다. tmux 가 있으면 ③ 을 창 다섯으로 띄워 준다(없어도 된다).
+Node 와 Claude Code(`claude`) 가 있어야 한다. 그 밖의 도구는 필요 없다.
 
 ### 순서 — 넷
 
@@ -331,8 +331,7 @@ cd /Users/나/work/crew && node setup.js
 ```
 cd /Users/나/work/crew
 node setup.js join 수율개선-2026q3     # 방을 만들고(있으면 그대로) 봇 다섯을 참여시킨다
-node setup.js start all                # 봇 다섯을 tmux 세션 crew 의 창 하나씩에 띄운다
-tmux attach -t crew                    # 창마다 아래 확인 두 번을 눌러 준다. 창 이동: Ctrl-b n
+node setup.js start all                # 봇 다섯을 터미널 창 하나씩에 띄운다 (창 제목 = 봇 이름)
 ```
 
 봇 세션은 **`bots/<봇>/` 폴더를 cwd 로** 뜬다. 그래서 그 봇의 `.mcp.json`(토큰·채널 플러그인)과 `.claude/settings.json`(권한·훅) 이 그 폴더에 있고, 봇은 자기 폴더 이름으로 자기가 누구인지 안다. `start all` 이 실제로 실행하는 것은 봇마다 이 한 줄이다:
@@ -348,7 +347,7 @@ cd /Users/나/work/crew/bots/analyst && claude --setting-sources project,local -
 
 시작 화면에 `Channels (experimental) messages from server:minidiscord-channel inject directly in this session` 이 보이고, 웹의 방 머리에서 봇 칩이 🟢 이면 붙은 것이다. 이제 웹에서 `@TO(orchestrator) 과제 시작: <목표 한 줄>` 에 파일을 붙여 보낸다.
 
-tmux 가 없으면 `start all` 이 위 한 줄을 봇마다 찍어 주니 터미널 다섯에 하나씩 붙여 넣는다. 봇 하나만 띄우려면 `node setup.js start analyst`.
+`start all` 은 맥에서는 Terminal.app 창을, 윈도우에서는 cmd 창을 봇마다 하나씩 연다. 둘 다 아닌 환경이면 위 한 줄을 봇마다 찍어 주니 터미널 다섯에 하나씩 붙여 넣는다. 봇 하나만 띄우려면 `node setup.js start analyst`.
 
 ### 생성 파일은 git 에 없다
 
@@ -383,7 +382,7 @@ tmux 가 없으면 `start all` 이 위 한 줄을 봇마다 찍어 주니 터미
   minidiscord/           채팅 서버 + 채널 플러그인 (별도 저장소)
 ```
 
-봇은 상주한다 — 방마다 새로 띄우지 않는다. 지침·스킬·훅을 고쳤으면 그 봇만 재시작한다(`tmux` 창에서 `/exit` 뒤 `node setup.js start <봇>`).
+봇은 상주한다 — 방마다 새로 띄우지 않는다. 지침·스킬·훅을 고쳤으면 그 봇만 재시작한다(그 봇의 창에서 `/exit` 뒤 `node setup.js start <봇>`).
 
 ## 9. 봇 추가 — 셋이면 끝
 

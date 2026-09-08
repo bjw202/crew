@@ -2,8 +2,8 @@
 // crew 설치·기동 도구 — 사람이 돌린다. 봇은 이 파일을 쓰지 않는다.
 //
 //   node setup.js              설치: 폴더·설정·.env·(서버가 떠 있으면) 봇 등록·.mcp.json  — 몇 번 돌려도 안전
-//   node setup.js start all    봇 다섯을 tmux 창 하나씩에 띄운다 (tmux 없으면 명령을 찍어 준다)
-//   node setup.js start analyst  봇 하나를 이 터미널에서 띄운다
+//   node setup.js start all    봇 다섯을 터미널 창 하나씩에 띄운다 (맥 Terminal.app · 윈도우 cmd · 그 밖은 명령 출력)
+//   node setup.js start analyst  봇 하나만
 //   node setup.js join <방>    방을 만들고(있으면 그대로) 봇 다섯을 참여시킨다
 //
 // 위치: minidiscord 는 기본 루트/minidiscord (crew 의 형제). 다른 곳이면 MINIDISCORD_DIR=<경로>.
@@ -119,25 +119,33 @@ async function join(roomName) {
   log(`웹에서 방 ${roomName} 을 열고 "@TO(orchestrator) 과제 시작: <목표 한 줄>" 로 시작한다.`);
 }
 
-// ── 봇 띄우기 ──
+// ── 봇 띄우기: 봇마다 터미널 창 하나 (맥 Terminal.app · 윈도우 cmd · 그 밖은 명령 출력) ──
 function start(which) {
   const targets = which === 'all' ? BOTS : [which];
   for (const b of targets) {
     if (!BOTS.includes(b)) throw new Error(`모르는 봇: ${b} (${BOTS.join(', ')})`);
     if (!fs.existsSync(path.join(CREW, 'bots', b, '.mcp.json'))) throw new Error(`bots/${b}/.mcp.json 이 없다 — node setup.js 먼저`);
   }
-  const cmd = b => `cd ${JSON.stringify(path.join(CREW, 'bots', b))} && claude ${CLAUDE_ARGS.join(' ')}`;
-  if (which !== 'all') { spawnSync('claude', CLAUDE_ARGS, { cwd: path.join(CREW, 'bots', which), stdio: 'inherit' }); return; }
-  const hasTmux = spawnSync('tmux', ['-V']).status === 0;
-  if (!hasTmux) { console.log('tmux 가 없다 — 터미널 다섯에 하나씩:'); for (const b of BOTS) console.log('  ' + cmd(b)); return; }
-  const session = 'crew';
-  const alive = spawnSync('tmux', ['has-session', '-t', session]).status === 0;
-  for (const [i, b] of BOTS.entries()) {
-    if (i === 0 && !alive) execSync(`tmux new-session -d -s ${session} -n ${b} ${JSON.stringify(cmd(b))}`);
-    else execSync(`tmux new-window -t ${session} -n ${b} ${JSON.stringify(cmd(b))}`);
-    log(`띄움  ${b} (tmux ${session}:${b})`);
+  const dir = b => path.join(CREW, 'bots', b);
+  const line = b => `cd ${JSON.stringify(dir(b))} && claude ${CLAUDE_ARGS.join(' ')}`;
+  if (process.platform === 'darwin') {
+    for (const b of targets) {
+      // Terminal.app 에 새 창을 열고 그 안에서 명령을 실행한다. 창 제목은 봇 이름.
+      const script = `printf '\\033]0;crew ${b}\\007'; ${line(b)}`;
+      spawnSync('osascript', ['-e', `tell application "Terminal" to do script ${JSON.stringify(script)}`, '-e', 'tell application "Terminal" to activate'], { stdio: 'ignore' });
+      log(`창 열림  ${b}`);
+    }
+    console.log('\n  창마다 첫 기동 확인 두 번(폴더 신뢰 · 개발 채널 경고)을 눌러 준다. 창 제목이 봇 이름이다.');
+  } else if (process.platform === 'win32') {
+    for (const b of targets) {
+      spawnSync('cmd', ['/c', 'start', `"crew ${b}"`, 'cmd', '/k', `cd /d "${dir(b)}" && claude ${CLAUDE_ARGS.join(' ')}`], { stdio: 'ignore', shell: true });
+      log(`창 열림  ${b}`);
+    }
+    console.log('\n  창마다 첫 기동 확인 두 번(폴더 신뢰 · 개발 채널 경고)을 눌러 준다.');
+  } else {
+    console.log('터미널 창을 자동으로 열 수 없는 환경이다 — 터미널을 하나씩 열어 아래를 붙여 넣는다:');
+    for (const b of targets) console.log('  ' + line(b));
   }
-  console.log(`\n  tmux attach -t ${session}   ← 창마다 첫 기동 확인 두 번(폴더 신뢰 · 개발 채널 경고)을 눌러 준다. 창 이동: Ctrl-b n`);
 }
 
 (async () => {
