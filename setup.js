@@ -14,6 +14,57 @@ const CREW = path.resolve(__dirname);
 // 상태줄은 crew 안의 common/statusline.sh 다. 봇은 --setting-sources project,local 로 뜨므로
 // ~/.claude/settings.json 의 statusLine 은 적용되지 않아 봇 설정에 직접 적어 준다.
 // 훅과 달리 statusLine 은 상대 경로를 주면 Claude Code 가 아예 부르지 않는다(실측) — 절대 경로로 넣는다.
+
+// ── PATH: 봇이 물려받는 값을 여기서 못 박는다 ─────────────────────────────
+// 왜 필요한가: 봇은 --setting-sources project,local 로 떠서 user 범위(~/.claude/settings.json)를
+// 읽지 않는다. 그래서 ~/.claude.json 의 env.PATH 가 깨져 있으면 그대로 물려받는다.
+// 실제로 그 파일에 "$PATH:..." 처럼 변수 참조가 글자 그대로 들어 있어 /usr/bin 과 /bin 이
+// 통째로 빠졌고, git·ls·grep 이 모두 command not found 가 되어 한 회차가 커밋 없이 끝났다.
+// 설정 파일의 env 값은 셸을 거치지 않는다 — $ 나 %% 가 들어가면 그냥 글자다.
+// 그래서 (1) 변수 참조가 든 조각을 버리고 (2) 실제로 있는 폴더만 남기고 (3) 표준 자리를 보탠다.
+const STD_DIRS = process.platform === 'win32'
+  ? [path.join(process.env.SystemRoot || 'C:\\Windows', 'System32'), process.env.SystemRoot || 'C:\\Windows',
+     path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'Wbem')]
+  : ['/usr/bin', '/bin', '/usr/sbin', '/sbin', '/usr/local/bin', '/opt/homebrew/bin'];
+// 봇이 지침대로 일하려면 반드시 있어야 하는 명령들 (없으면 기동 전에 사람에게 알린다)
+const NEEDED = process.platform === 'win32'
+  ? ['git.exe', 'node.exe']
+  : ['git', 'node', 'ls', 'cat', 'head', 'tail', 'grep', 'sed', 'awk', 'wc', 'find', 'sort', 'date'];
+
+function buildPath() {
+  const seen = new Set(); const out = [];
+  const push = d => {
+    if (!d) return;
+    if (d.includes('$') || d.includes('%')) return;              // 변수 참조는 글자로 남으므로 버린다
+    if (!path.isAbsolute(d)) return;
+    const k = process.platform === 'win32' ? d.toLowerCase() : d;
+    if (seen.has(k)) return;
+    if (!fs.existsSync(d)) return;
+    seen.add(k); out.push(d);
+  };
+  for (const d of (process.env.PATH || '').split(path.delimiter)) push(d);
+  for (const d of STD_DIRS) push(d);                              // 표준 자리는 언제나 보탠다
+  return out.join(path.delimiter);
+}
+
+// 주어진 PATH 아래에서 명령이 실제로 풀리는지 본다. 돌려주는 것: [{ name, dir|null }]
+function probe(pathValue) {
+  const dirs = pathValue.split(path.delimiter);
+  const exts = process.platform === 'win32' ? ['', '.exe', '.cmd', '.bat'] : [''];
+  return NEEDED.map(name => {
+    for (const d of dirs) for (const e of exts) {
+      const f = path.join(d, name + e);
+      try { fs.accessSync(f, fs.constants.X_OK); return { name, dir: d }; } catch {}
+    }
+    return { name, dir: null };
+  });
+}
+
+const BOT_PATH = buildPath();
+// setup.js 자신도 git 을 부른다. 물려받은 PATH 가 깨져 있으면 여기서 먼저 죽으므로 고친 값을 스스로 쓴다.
+process.env.PATH = BOT_PATH;
+// 압축 문턱 — 시험할 때 바꾸기 쉽도록 변수로 둔다 (CREW_AUTOCOMPACT=120000 node setup.js)
+const AUTOCOMPACT = Number(process.env.CREW_AUTOCOMPACT || 650000);
 const ROOT = path.dirname(CREW);
 const ROOMS = path.join(ROOT, 'rooms');
 const KNOWLEDGE = path.join(ROOT, 'knowledge');
@@ -87,7 +138,9 @@ async function install() {
       .replace('"{{DENY_KNOWLEDGE}}"', JSON.stringify(knowledgeDeny))
       .replace(/\{\{CREW\}\}/g, pat(CREW)).replace(/\{\{ROOMS\}\}/g, pat(ROOMS)).replace(/\{\{KNOWLEDGE\}\}/g, pat(KNOWLEDGE)).replace(/\{\{BOT\}\}/g, bot)
       .replace('{{ROOMS_DIR}}', ROOMS.replace(/\\/g, '\\\\')).replace('{{KNOWLEDGE_DIR}}', KNOWLEDGE.replace(/\\/g, '\\\\')).replace('{{PROPOSALS_DIR}}', path.join(CREW, 'proposals').replace(/\\/g, '\\\\'))
-      .replace('{{STATUSLINE}}', path.join(CREW, 'common', 'statusline.sh').replace(/\\/g, '\\\\')));
+      .replace('{{STATUSLINE}}', path.join(CREW, 'common', 'statusline.sh').replace(/\\/g, '\\\\'))
+      .replace('{{PATH}}', BOT_PATH.replace(/\\/g, '\\\\'))
+      .replace('"{{AUTOCOMPACT}}"', String(AUTOCOMPACT)));
     const dir = path.join(CREW, 'bots', bot, '.claude'); fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, 'settings.json'), JSON.stringify(json, null, 2) + '\n');
     if (!fs.existsSync(envFile(bot))) writeEnv(envFile(bot), { MINIDISCORD_TOKEN: '' });
@@ -96,6 +149,20 @@ async function install() {
     else noToken.push(bot);
     log(`씀  bots/${bot}/  settings.json${token ? ' · .mcp.json' : '  (.mcp.json 은 토큰이 없어 건너뜀)'}`);
   }
+
+  // ③-b 봇이 쓸 PATH 에서 명령이 실제로 풀리는지 본다 — 여기서 걸러야 기동 뒤에 안 막힌다
+  const found = probe(BOT_PATH);
+  const missing = found.filter(x => !x.dir);
+  console.log('\n③-b 봇 환경 점검 (봇 설정에 박은 PATH 로 확인)');
+  log(`PATH  ${BOT_PATH.split(path.delimiter).length}개 폴더 · 변수 참조 없음`);
+  if (!missing.length) log(`명령  ${found.length}개 모두 풀림 (git → ${found.find(x => x.name.startsWith('git')).dir})`);
+  else {
+    log(`명령  ${found.length - missing.length}/${found.length} 풀림`);
+    log(`!! 못 찾음: ${missing.map(x => x.name).join(', ')}`);
+    log('!! 이대로 봇을 띄우면 그 명령을 쓰는 일이 전부 막힌다.');
+    log('!! 그 명령이 있는 폴더를 PATH 에 넣고 다시 돌려라 — 예: PATH="$PATH:/opt/homebrew/bin" node setup.js');
+  }
+  log(`압축 문턱  ${AUTOCOMPACT.toLocaleString()} 토큰 (바꾸려면 CREW_AUTOCOMPACT=<값> node setup.js)`);
 
   console.log('\n④ 서버 명령 (minidiscord 폴더 안에서 — rooms 전체 경로가 들어 있다)');
   log(`cd ${JSON.stringify(MINIDISCORD)} && MINIDISCORD_BOT_FILES_DIR=${JSON.stringify(ROOMS)} MINIDISCORD_BOT_RUN_LIMIT=0 npm run dev -w server`);
