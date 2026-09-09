@@ -21,6 +21,6 @@
 반영되지 않는 동안 같은 반려가 한 번 더 났다. 결재와 반영 사이의 거리가 곧 되풀이되는 반려의 수다.
 retro.js 가 이미 그 목록을 찍고 있으므로 새로 세는 일은 없고, 결재 글에 칸 하나를 더하는 것으로 끝난다.
 
-상태: 제안
+상태: 반영 (결재 jw, 2026-09-09, message 269. orchestrator 가 crew/bots/orchestrator/CLAUDE.md 의 "회차 닫힘 / 과제 끝" 절에 세 줄을 더했다)
 
-적용 커밋: -
+적용 커밋: PR proposal/011-orchestrator
