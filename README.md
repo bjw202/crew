@@ -401,12 +401,18 @@ cd /Users/나/work/crew/bots/analyst && claude --setting-sources project,local -
 ## 10. 운영 습관
 
 - 과제 하나가 끝나면 봇 다섯의 터미널에서 `/clear` 를 한 번씩 친다. 안 해도 훅과 파일이 받치지만, 하면 가장 깨끗하다.
-- 자동 압축은 봇 전부 65만 토큰(`autoCompactWindow`, `common/settings.template.json`)에서 돈다. 모델 창(100만)의 65%다.
+- 자동 압축은 봇 전부 65만 토큰에서 돈다. 모델 창(100만)의 65%다. **문턱은 변수다** — `CREW_AUTOCOMPACT=120000 node setup.js` 로 바꿔 시험할 수 있다.
   압축은 프롬프트 캐시를 끊으므로 자주 걸면 오히려 비싸다 — 그래서 문턱을 낮게 잡지 않고 긴 과제용 안전망으로만 둔다.
   봇 하나만 바꾸려면 `bots/<봇>/.claude/settings.local.json` 에 같은 키를 두면 그쪽이 이긴다.
 - 도구 승인은 `settings.template.json` 의 allow 목록(채널 reply·fetch_history, Read, 자기 폴더 쓰기, git 등)으로 미리 열어 둔다. 목록 밖 도구는 방에 승인 요청이 올라오고 사람이 `yes <ID>` 로 답한다.
   allow 는 명령 이름으로 맞춘다. 봇이 `/usr/bin/git …` 처럼 절대 경로로 부르거나 `a && b` 로 이어 붙이면 목록과 맞지 않아 승인이 올라온다 —
   그래서 공통 규칙이 "Bash 한 번에 명령 하나, 이름으로 부른다"고 못박는다. 승인 요청이 한 자릿수를 넘으면 규칙이 아니라 allow 목록을 의심한다.
+- **봇의 PATH 는 `setup.js` 가 계산해 봇 설정에 박는다.** 봇은 `--setting-sources project,local` 로 떠서 `~/.claude/settings.json` 을 읽지 않으므로,
+  `~/.claude.json` 의 `env.PATH` 가 깨져 있으면 그대로 물려받는다. 설정 파일의 `env` 값은 셸을 거치지 않아 `"$PATH:…"` 같은 변수 참조가 글자로 남는다 —
+  실제로 이 때문에 `/usr/bin` 이 빠져 `git`·`ls`·`grep` 이 모두 없는 명령이 되었고 한 회차가 커밋 없이 끝났다.
+  그래서 `setup.js` 는 변수 참조가 든 조각을 버리고, 실제로 있는 폴더만 남기고, 표준 자리를 보태 다시 만든다.
+  설치 때 `③-b` 절이 그 PATH 로 명령 13개가 풀리는지 보여 준다. 못 찾는 것이 있으면 거기서 멈추고 알린다.
+  기동 뒤에도 어긋나면 `session-start.js` 훅이 깨어날 때마다 봇에게 알린다.
 - 상태줄은 crew 안의 `common/statusline.sh` 다. 봇은 `--setting-sources project,local` 로 뜨므로 `~/.claude/settings.json` 의 `statusLine` 은 적용되지 않는다 —
   그래서 `setup.js` 가 봇 설정에 이 스크립트의 절대 경로를 적어 준다.
   훅은 상대 경로(`node ../../common/hooks/…`)로 되지만 **상태줄은 상대 경로를 주면 Claude Code 가 아예 부르지 않는다**(실측: 75초 동안 0회 호출).

@@ -63,9 +63,34 @@ function main() {
   const mem = section('memory.md', path.join(cwd, 'memory.md'), LIMITS.memory, null);
   if (mem) parts.push(mem);
 
+  // 환경 점검 — 명령이 안 풀리면 봇이 원인을 모른 채 "command not found" 만 보고 헤맨다.
+  // setup.js 가 PATH 를 못 박지만 다른 PC·다른 기동 방법에서는 어긋날 수 있어 깨어날 때마다 본다.
+  // 멀쩡하면 아무 말도 하지 않는다 — 문맥을 축내지 않기 위해서다.
+  const env = envWarning();
+  if (env) parts.push(env);
+
   process.stdout.write(JSON.stringify({
     hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: parts.filter(Boolean).join('\n\n') }
   }));
+}
+
+// PATH 에서 꼭 필요한 명령이 풀리는지 본다. 멀쩡하면 null.
+function envWarning() {
+  const need = process.platform === 'win32' ? ['git.exe', 'node.exe'] : ['git', 'ls', 'cat', 'grep', 'sed'];
+  const exts = process.platform === 'win32' ? ['', '.exe', '.cmd'] : [''];
+  const dirs = (process.env.PATH || '').split(path.delimiter);
+  const missing = need.filter(n => !dirs.some(d => exts.some(e => {
+    try { fs.accessSync(path.join(d, n + e), fs.constants.X_OK); return true; } catch { return false; }
+  })));
+  if (!missing.length) return null;
+  const lit = dirs.filter(d => d.includes('$') || d.includes('%'));
+  return [
+    `## 환경 경고 — 명령을 찾을 수 없다: ${missing.join(', ')}`,
+    `PATH 폴더 ${dirs.length}개에 이 명령들이 없다. 그대로 부르면 "command not found" 로 끝난다.`,
+    lit.length ? `PATH 에 펼쳐지지 않은 변수 참조가 있다: ${lit.join(', ')} — 설정의 env 값은 셸을 거치지 않는다.` : '',
+    '이것은 네가 고칠 수 있는 자리가 아니다. 일을 멈추지 말고, 지금 회차의 보고 "못 확인한 것"에 이 줄을 적고',
+    '사람에게 권한 요청으로 올려라: crew/setup.js 를 다시 돌리면 봇 설정의 PATH 가 다시 계산된다.',
+  ].filter(Boolean).join('\n');
 }
 
 main();
